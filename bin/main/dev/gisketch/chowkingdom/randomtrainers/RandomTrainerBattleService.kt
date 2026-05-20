@@ -61,6 +61,7 @@ object RandomTrainerBattleService {
     fun start(player: ServerPlayer, entity: RandomTrainerEntity): RandomTrainerStartResult {
         val instance = api ?: return RandomTrainerStartResult(false, "The trainer battle API is not ready yet.")
         if (entity.inTrainerBattle) return RandomTrainerStartResult(false, "${entity.trainerName} is already battling.")
+        if (RandomTrainerStore.hasDefeated(player, entity.rosterId)) return RandomTrainerStartResult(false, "You already defeated ${entity.trainerName}.")
         if (!partyBattleReady(player)) return RandomTrainerStartResult(false, "Your party needs at least one Pokemon that can battle.")
         val definition = RandomTrainerCatalog.byId(entity.rosterId) ?: return RandomTrainerStartResult(false, "Trainer roster is missing: ${entity.rosterId}.")
         val topLevel = playerTopLevel(player).coerceAtLeast(1)
@@ -168,7 +169,6 @@ object RandomTrainerBattleService {
             ?.firstOrNull()
         entity?.inTrainerBattle = false
         if (state.isEndForced || player == null) {
-            entity?.discard()
             return
         }
         val winner = state.winners.asSequence()
@@ -192,7 +192,6 @@ object RandomTrainerBattleService {
                 if (won) SnackbarSounds.REWARD else SnackbarSounds.GENERIC,
             ),
         )
-        entity?.discard()
     }
 
     private fun pokemonLevel(pokemon: Any): Int? {

@@ -70,10 +70,14 @@ object RandomTrainerCommands {
 
     private fun validate(context: CommandContext<CommandSourceStack>): Int {
         val stats = RandomTrainerCatalog.stats()
-        val target = RandomTrainerCatalog.settings().generatedCatalogSize.coerceAtLeast(0)
-        val valid = stats.trainerCount >= target && stats.invalidCount == 0
+        val prefill = RandomTrainerCatalog.settings().generatedPrefillSize.coerceAtLeast(0)
+        val valid = stats.trainerCount > 0 && stats.spawnableCount > 0
         context.source.sendSuccess(
-            { Component.literal("Random trainer catalog ${if (valid) "valid" else "invalid"}: ${stats.trainerCount} loaded, generated_prefill=$target, invalid=${stats.invalidCount}.") },
+            {
+                Component.literal(
+                    "Random trainer catalog ${if (valid) "valid" else "invalid"}: ${stats.trainerCount} loaded (${stats.spawnableCount} spawnable, ${stats.importedCount} imported, ${stats.generatedCount} generated), generated_prefill=$prefill, skipped=${stats.invalidCount}.",
+                )
+            },
             false,
         )
         return if (valid) stats.trainerCount else 0

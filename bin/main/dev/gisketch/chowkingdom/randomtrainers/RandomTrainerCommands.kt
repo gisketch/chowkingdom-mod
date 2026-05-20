@@ -3,6 +3,7 @@ package dev.gisketch.chowkingdom.randomtrainers
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
+import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.network.chat.Component
@@ -30,11 +31,16 @@ object RandomTrainerCommands {
                 .then(Commands.literal("stats").executes(::stats))
                 .then(Commands.literal("validate").requires { it.hasPermission(2) }.executes(::validate))
                 .then(Commands.literal("reload").requires { it.hasPermission(2) }.executes(::reload))
+                .then(Commands.literal("extract").requires { it.hasPermission(2) }.executes(::extract))
                 .then(
                     Commands.literal("spawn")
                         .requires { it.hasPermission(2) }
                         .executes { context -> spawn(context, "") }
-                        .then(Commands.argument("roster", StringArgumentType.word()).executes { context -> spawn(context, StringArgumentType.getString(context, "roster")) }),
+                        .then(
+                            Commands.argument("roster", StringArgumentType.word())
+                                .suggests { _, builder -> SharedSuggestionProvider.suggest(RandomTrainerCatalog.spawnSuggestions(), builder) }
+                                .executes { context -> spawn(context, StringArgumentType.getString(context, "roster")) },
+                        ),
                 )
                 .then(Commands.literal("despawnall").requires { it.hasPermission(2) }.executes(::despawnAll))
                 .then(
@@ -52,7 +58,7 @@ object RandomTrainerCommands {
         context.source.sendSuccess(
             {
                 Component.literal(
-                    "Random trainers: ${stats.trainerCount} rosters (${stats.importedCount} imported, ${stats.generatedCount} generated, ${stats.invalidCount} invalid), spawned=${RandomTrainerSpawner.spawnedCount()}",
+                    "Random trainers: ${stats.trainerCount} rosters (${stats.spawnableCount} spawnable, ${stats.importedCount} imported, ${stats.generatedCount} generated, ${stats.invalidCount} invalid), spawned=${RandomTrainerSpawner.spawnedCount()}",
                 )
             },
             false,
@@ -78,6 +84,18 @@ object RandomTrainerCommands {
         RandomTrainerStore.load()
         context.source.sendSuccess({ Component.literal("Reloaded $count random trainer roster(s).") }, true)
         return count
+    }
+
+    private fun extract(context: CommandContext<CommandSourceStack>): Int {
+        val pairs = RandomTrainerCatalog.titleGenderPairs()
+        context.source.sendSuccess({ Component.literal("Random trainer title/gender/skin folders (${pairs.size}):") }, false)
+        pairs.forEach { pair ->
+            context.source.sendSuccess(
+                { Component.literal("${pair.title} | ${pair.gender} | skins=${pair.skinFolder} | count=${pair.count}") },
+                false,
+            )
+        }
+        return pairs.size
     }
 
     private fun spawn(context: CommandContext<CommandSourceStack>, rosterId: String): Int {

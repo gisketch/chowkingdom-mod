@@ -52,13 +52,54 @@ private class RandomTrainerRenderer(context: EntityRendererProvider.Context) :
     override fun getTextureLocation(entity: RandomTrainerEntity): ResourceLocation {
         val skin = entity.skinSet.trim().lowercase(Locale.ROOT).replace('\\', '/').trim('/').takeIf { it.isNotBlank() }
         if (skin != null) {
-            if ('/' !in skin) {
-                return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin.png")
+            skinFolderCandidates(entity, skin).forEach { folder ->
+                folderSkin(entity.uuid, folder)?.let { return it }
             }
-            folderSkin(entity.uuid, skin)?.let { return it }
+            if ('/' !in skin) return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin.png")
             return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin/default.png")
         }
         return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/npc/prof_chowfan.png")
+    }
+
+    private fun skinFolderCandidates(entity: RandomTrainerEntity, skin: String): List<String> {
+        val gender = cleanRandomTrainerId(entity.trainerGender).takeIf { it == "male" || it == "female" }
+        val title = cleanRandomTrainerId(entity.trainerTitle)
+        val folders = linkedSetOf<String>()
+        fun addGendered(base: String) {
+            if (gender != null) folders += "$base/$gender"
+        }
+        if ('/' in skin) {
+            folders += skin
+            val base = skin.substringBefore('/').trim('/')
+            if (base.isNotBlank()) {
+                skinBaseAliases(base).forEach { alias ->
+                    addGendered(alias)
+                }
+            }
+        } else {
+            skinBaseAliases(skin).forEach { alias ->
+                addGendered(alias)
+            }
+        }
+        if (title.isNotBlank()) {
+            skinBaseAliases(title).forEach { alias ->
+                addGendered(alias)
+            }
+        }
+        return folders.filter(String::isNotBlank)
+    }
+
+    private fun skinBaseAliases(base: String): List<String> {
+        val clean = cleanRandomTrainerId(base)
+        val aliases = linkedSetOf(clean)
+        when (clean) {
+            "swimmerf", "swimmerm" -> aliases += "swimmer"
+        }
+        listOf("_female", "_male", "female", "male").firstOrNull { clean.endsWith(it) }?.let { suffix ->
+            aliases += clean.removeSuffix(suffix).trim('_')
+        }
+        if (clean.endsWith("f") || clean.endsWith("m")) aliases += clean.dropLast(1).trim('_')
+        return aliases.filter(String::isNotBlank)
     }
 
     private fun folderSkin(uuid: UUID, folder: String): ResourceLocation? {
@@ -70,11 +111,14 @@ private class RandomTrainerRenderer(context: EntityRendererProvider.Context) :
                 .sortedBy(ResourceLocation::toString)
         }
         if (resources.isEmpty()) return null
-        val index = Math.floorMod(uuid.hashCode(), resources.size)
-        return resources[index]
+        return chosenSkinCache.getOrPut("$uuid|$folder") {
+            val index = Math.floorMod(uuid.hashCode(), resources.size)
+            resources[index]
+        }
     }
 
     companion object {
         private val skinCache: MutableMap<String, List<ResourceLocation>> = linkedMapOf()
+        private val chosenSkinCache: MutableMap<String, ResourceLocation> = linkedMapOf()
     }
 }

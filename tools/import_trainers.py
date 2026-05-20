@@ -887,22 +887,42 @@ def main() -> int:
     parser.add_argument("--sources-root", type=Path, default=Path(os.environ.get("TEMP", ".")) / "ckdm-trainer-sources")
     parser.add_argument("--rct-source", type=Path, default=DEFAULT_RCT_SOURCE)
     parser.add_argument("--target", type=Path, default=DEFAULT_TARGET)
+    parser.add_argument("--skip-unify", action="store_true", help="Write source-bucket files directly to target for debugging.")
+    parser.add_argument("--keep-raw", action="store_true", help="Keep the temporary raw import catalog after unifying.")
     args = parser.parse_args()
 
-    args.target.mkdir(parents=True, exist_ok=True)
+    work_target = args.target if args.skip_unify else args.target.parent / "catalog_import_raw"
+    if not args.skip_unify and work_target.exists():
+        remove_tree(work_target)
+    work_target.mkdir(parents=True, exist_ok=True)
+
     parsed = parse_sources(args.sources_root)
     total = 0
     rct_defs = parse_rct(args.rct_source)
-    rct_count = write_defs(args.target, "rct", rct_defs) if rct_defs else normalize_existing_rct(args.target)
+    rct_count = write_defs(work_target, "rct", rct_defs) if rct_defs else normalize_existing_rct(work_target)
     total += rct_count
     if rct_count:
         print(f"rct: parsed={len(rct_defs) if rct_defs else rct_count} written={rct_count}")
     for source, defs in parsed.items():
-        count = write_defs(args.target, source, defs)
+        count = write_defs(work_target, source, defs)
         total += count
         print(f"{source}: parsed={len(defs)} written={count}")
     print(f"total_written={total}")
+    if args.skip_unify:
+        print(f"target={args.target}")
+        return 0
+
+    import unify_random_trainers as unify
+
+    trainers, catalog_stats = unify.load_catalog(work_target)
+    backup = unify.rebuild_catalog(args.target, trainers, False)
+    skin_stats = unify.unify_skins(unify.DEFAULT_SKINS, False)
+    skin_stats.update(unify.scaffold_skin_placeholders(unify.DEFAULT_SKINS, trainers, False))
+    unify.write_report(args.target, catalog_stats, skin_stats, backup, False)
+    if not args.keep_raw:
+        remove_tree(work_target)
     print(f"target={args.target}")
+    print(f"unified_written={catalog_stats['written']} duplicate_entries={catalog_stats['duplicate_entries']} skipped={catalog_stats['skipped']}")
     return 0
 
 

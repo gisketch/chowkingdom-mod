@@ -67,6 +67,9 @@ object RandomTrainerCatalog {
         catalogDir.createDirectories()
         if (!settingsFile.exists()) TomlConfigIO.write(settingsFile, RandomTrainerSettings())
         settings = TomlConfigIO.read(settingsFile, RandomTrainerSettings::class.java, ::RandomTrainerSettings)
+        settings.allowedDimensions = settings.allowedDimensions.map(::cleanDimensionId).filter(String::isNotBlank).distinct().toMutableList()
+        settings.blockedDimensions = settings.blockedDimensions.map(::cleanDimensionId).filter(String::isNotBlank).distinct().toMutableList()
+        TomlConfigIO.write(settingsFile, settings)
         ensureDefaultGenerationSeed()
         val seed = TomlConfigIO.read(generationSeedFile, RandomTrainerGenerationSeed::class.java, ::RandomTrainerGenerationSeed).normalized()
         val imported = loadConfiguredDefinitions()
@@ -76,6 +79,10 @@ object RandomTrainerCatalog {
             val normalized = definition.normalized()
             if (normalized.id.isBlank() || normalized.team.isEmpty()) {
                 invalid += 1
+            } else if (isBlockedWildTrainerTitle(normalized.title)) {
+                invalid += 1
+            } else if (isMultiTrainerDefinition(normalized.title, normalized.name)) {
+                invalid += 1
             } else {
                 importedById[normalized.id] = normalized
             }
@@ -84,6 +91,8 @@ object RandomTrainerCatalog {
         val generatedSize = generatedCatalogSize()
         generatedDefaults(generatedSize, seed).forEach { generated ->
             if (importedById.size + generatedById.size >= generatedSize) return@forEach
+            if (isBlockedWildTrainerTitle(generated.title)) return@forEach
+            if (isMultiTrainerDefinition(generated.title, generated.name)) return@forEach
             if (generated.id !in importedById) generatedById[generated.id] = generated
         }
         trainers = (importedById.values + generatedById.values).sortedBy { it.id }
@@ -92,22 +101,25 @@ object RandomTrainerCatalog {
             importedCount = importedById.size,
             generatedCount = generatedById.size,
             invalidCount = invalid,
+            spawnableCount = trainers.count { it.spawnable },
         )
         loaded = true
     }
 
     fun pickFor(player: ServerPlayer, topLevel: Int, excludedDefeated: Set<String>): RandomTrainerDefinition? {
         ensureLoaded()
-        if (trainers.isEmpty()) return null
-        val exclusion = if (excludedDefeated.size >= trainers.size) emptySet() else excludedDefeated
+        val spawnable = trainers.filter { it.spawnable }
+        if (spawnable.isEmpty()) return null
+        val exclusion = if (excludedDefeated.size >= spawnable.size) emptySet() else excludedDefeated
         val maxDiff = settings.maxLevelDiff.coerceAtLeast(1)
         val level = topLevel.coerceIn(1, 100)
-        val candidates = trainers.filter { trainer ->
+        val candidates = spawnable.filter { trainer ->
             trainer.id !in exclusion && level in (trainer.minLevel - maxDiff)..(trainer.maxLevel + maxDiff)
-        }.ifEmpty { trainers.filter { it.id !in exclusion } }.ifEmpty { trainers }
+        }.ifEmpty { spawnable.filter { it.id !in exclusion } }.ifEmpty { spawnable }
         val weights = candidates.map { trainer ->
             val center = (trainer.minLevel + trainer.maxLevel) / 2
-            (maxDiff + 10 - abs(center - level)).coerceAtLeast(1)
+            val levelWeight = (maxDiff + 10 - abs(center - level)).coerceAtLeast(1).toDouble()
+            (levelWeight * tierWeight(level, trainer.tier)).toInt().coerceAtLeast(1)
         }
         val total = weights.sum().coerceAtLeast(1)
         var roll = player.random.nextInt(total)
@@ -116,6 +128,20 @@ object RandomTrainerCatalog {
             if (roll < 0) return trainer
         }
         return candidates.lastOrNull()
+    }
+
+    fun spawnSuggestions(): List<String> {
+        ensureLoaded()
+        return trainers.map { it.id }.sorted()
+    }
+
+    fun titleGenderPairs(): List<RandomTrainerTitleGenderSummary> {
+        ensureLoaded()
+        return trainers
+            .groupingBy { RandomTrainerTitleGenderKey(it.title, it.gender, it.skinFolder) }
+            .eachCount()
+            .map { (key, count) -> RandomTrainerTitleGenderSummary(key.title, key.gender, key.skinFolder, count) }
+            .sortedWith(compareBy<RandomTrainerTitleGenderSummary> { it.title }.thenBy { it.gender }.thenBy { it.skinFolder })
     }
 
     fun scaledTrainerJson(definition: RandomTrainerDefinition, topLevel: Int): JsonObject {
@@ -244,14 +270,21 @@ object RandomTrainerCatalog {
         if (pokemon.isEmpty()) return null
         val baseId = cleanRandomTrainerId(relativePath.removeSuffix(".json"))
         val name = textValue(root["name"]).ifBlank { baseId.replace('_', ' ') }
-        val title = relativePath.split('\\', '/').dropLast(1).lastOrNull()?.replace('_', ' ')?.ifBlank { "RCT Trainer" } ?: "RCT Trainer"
+        val parentTitle = relativePath.split('\\', '/').dropLast(1).lastOrNull()?.replace('_', ' ').orEmpty()
+        val title = parentTitle.ifBlank { inferTitleFromName(name) }
+        if (isBlockedWildTrainerTitle(title)) return null
+        if (isMultiTrainerDefinition(title, name)) return null
+        val gender = normalizeTrainerGender("any", title)
         return RandomTrainerDefinition(
             id = "rct_$baseId",
             name = name,
             title = title,
-            gender = "any",
+            gender = gender,
             archetype = title,
             source = "rct_import",
+            skinFolder = "${cleanRandomTrainerId(title)}/$gender",
+            tier = normalizeTrainerTier("", pokemon.minOf { it.level }, pokemon.maxOf { it.level }, title),
+            spawnable = !isUniqueTrainerTitle(title),
             minLevel = pokemon.minOf { it.level }.coerceIn(1, 100),
             maxLevel = pokemon.maxOf { it.level }.coerceIn(1, 100),
             team = pokemon.toMutableList(),
@@ -297,8 +330,14 @@ object RandomTrainerCatalog {
                 gender = archetype.gender,
                 archetype = archetype.id,
                 region = archetype.region,
-                source = "generated_lore",
+            source = "generated_lore",
                 skinSet = archetype.skinSet,
+                skinFolder = archetype.skinFolder,
+                tier = archetype.tier,
+                spawnable = archetype.spawnable,
+                height = archetype.height,
+                weight = archetype.weight,
+                bustStyle = archetype.bustStyle,
                 minLevel = archetype.minLevel,
                 maxLevel = archetype.maxLevel,
                 team = generatedTeam(archetype, index).toMutableList(),
@@ -321,4 +360,42 @@ object RandomTrainerCatalog {
             ).normalized()!!
         }
     }
+
+    private fun tierWeight(playerLevel: Int, tier: String): Double {
+        val target = when {
+            playerLevel < 20 -> 0
+            playerLevel < 45 -> 1
+            playerLevel < 70 -> 2
+            else -> 3
+        }
+        val value = when (tier) {
+            "low" -> 0
+            "mid" -> 1
+            "high" -> 2
+            "very_high" -> 3
+            else -> 4
+        }
+        if (value == 4) return 0.05
+        val skew = settings.tierWeightSkew.coerceIn(0.0, 1.0)
+        return (1.0 - abs(target - value) * skew).coerceAtLeast(0.1)
+    }
+
+    private fun inferTitleFromName(name: String): String {
+        val words = name.trim().split(Regex("\\s+")).filter(String::isNotBlank)
+        if (words.size < 2) return "RCT Trainer"
+        return words.dropLast(1).joinToString(" ").ifBlank { "RCT Trainer" }
+    }
 }
+
+class RandomTrainerTitleGenderSummary(
+    val title: String,
+    val gender: String,
+    val skinFolder: String,
+    val count: Int,
+)
+
+private data class RandomTrainerTitleGenderKey(
+    val title: String,
+    val gender: String,
+    val skinFolder: String,
+)

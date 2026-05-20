@@ -63,6 +63,7 @@ object RandomTrainerSpawner {
         val now = server.overworld().gameTime
         server.playerList.players.forEach { player ->
             if (player.isSpectator || player.isCreative) return@forEach
+            if (!canNaturalSpawnIn(player, settings)) return@forEach
             val due = nextAttemptTick[player.uuid] ?: 0L
             if (now < due) return@forEach
             nextAttemptTick[player.uuid] = now + nextInterval(player, settings)
@@ -168,6 +169,16 @@ object RandomTrainerSpawner {
         val base = settings.spawnIntervalTicks.coerceAtLeast(20)
         val max = settings.spawnIntervalTicksMaximum.coerceAtLeast(base)
         return (base + count * base / 2).coerceAtMost(max).toLong()
+    }
+
+    private fun canNaturalSpawnIn(player: ServerPlayer, settings: RandomTrainerSettings): Boolean {
+        val level = player.level() as? ServerLevel ?: return false
+        val dimensionId = cleanDimensionId(level.dimension().location().toString())
+        val allowed = settings.allowedDimensions.map(::cleanDimensionId).filter(String::isNotBlank)
+        val blocked = settings.blockedDimensions.map(::cleanDimensionId).filter(String::isNotBlank).toSet()
+        if (dimensionId in blocked) return false
+        if (allowed.isNotEmpty() && dimensionId !in allowed) return false
+        return true
     }
 
     private fun entityByUuid(server: MinecraftServer, uuid: UUID): RandomTrainerEntity? =

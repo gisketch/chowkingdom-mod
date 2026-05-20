@@ -88,9 +88,9 @@ object RandomTrainerCatalog {
             }
         }
         val generatedById = linkedMapOf<String, RandomTrainerDefinition>()
-        val generatedSize = generatedCatalogSize()
-        generatedDefaults(generatedSize, seed).forEach { generated ->
-            if (importedById.size + generatedById.size >= generatedSize) return@forEach
+        val generatedPrefillSize = generatedPrefillSize()
+        generatedDefaults(generatedPrefillSize, seed).forEach { generated ->
+            if (importedById.size + generatedById.size >= generatedPrefillSize) return@forEach
             if (isBlockedWildTrainerTitle(generated.title)) return@forEach
             if (isMultiTrainerDefinition(generated.title, generated.name)) return@forEach
             if (generated.id !in importedById) generatedById[generated.id] = generated
@@ -185,8 +185,8 @@ object RandomTrainerCatalog {
         if (!loaded) load()
     }
 
-    private fun generatedCatalogSize(): Int {
-        return settings.generatedCatalogSize.coerceAtLeast(0)
+    private fun generatedPrefillSize(): Int {
+        return settings.generatedPrefillSize.coerceAtLeast(0)
     }
 
     private fun ensureDefaultGenerationSeed() {

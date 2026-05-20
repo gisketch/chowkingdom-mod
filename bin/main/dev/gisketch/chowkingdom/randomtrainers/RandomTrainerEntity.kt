@@ -1,5 +1,6 @@
 package dev.gisketch.chowkingdom.randomtrainers
 
+import dev.gisketch.chowkingdom.compat.PehkuiScaleBridge
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
 import net.minecraft.network.syncher.EntityDataAccessor
@@ -68,11 +69,12 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
         trainerName = definition.displayName()
         trainerTitle = definition.title
         trainerGender = definition.gender
-        skinSet = definition.skinSet
+        skinSet = definition.skinPath()
         originPlayerUuid = originPlayer.uuid
         spawnedAtTick = spawnTick
         customName = Component.literal(trainerName)
         isCustomNameVisible = true
+        PehkuiScaleBridge.apply(this, definition.height, definition.weight)
     }
 
     override fun mobInteract(player: Player, hand: InteractionHand): InteractionResult {
@@ -83,7 +85,24 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
 
     override fun aiStep() {
         super.aiStep()
+        if (inTrainerBattle) freezeBattleMotion()
         if (!level().isClientSide) RandomTrainerSpawner.track(this)
+    }
+
+    override fun customServerAiStep() {
+        if (inTrainerBattle) {
+            freezeBattleMotion()
+            return
+        }
+        super.customServerAiStep()
+    }
+
+    private fun freezeBattleMotion() {
+        navigation.stop()
+        target = null
+        setDeltaMovement(0.0, deltaMovement.y, 0.0)
+        xxa = 0.0f
+        zza = 0.0f
     }
 
     override fun shouldBeSaved(): Boolean = false
@@ -137,4 +156,3 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
         private const val ORIGIN_PLAYER_TAG = "OriginPlayer"
     }
 }
-

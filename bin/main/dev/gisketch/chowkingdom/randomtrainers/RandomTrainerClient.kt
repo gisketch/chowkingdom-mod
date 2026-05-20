@@ -1,6 +1,7 @@
 package dev.gisketch.chowkingdom.randomtrainers
 
 import dev.gisketch.chowkingdom.ChowKingdomMod
+import net.minecraft.client.Minecraft
 import net.minecraft.client.model.HumanoidModel
 import net.minecraft.client.model.PlayerModel
 import net.minecraft.client.model.geom.ModelLayers
@@ -12,6 +13,7 @@ import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.client.event.EntityRenderersEvent
 import java.util.Locale
+import java.util.UUID
 
 object RandomTrainerClient {
     fun register(modBus: IEventBus) {
@@ -48,9 +50,31 @@ private class RandomTrainerRenderer(context: EntityRendererProvider.Context) :
     }
 
     override fun getTextureLocation(entity: RandomTrainerEntity): ResourceLocation {
-        val skin = entity.skinSet.trim().lowercase(Locale.ROOT).takeIf { it.isNotBlank() }
-        if (skin != null) return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin.png")
+        val skin = entity.skinSet.trim().lowercase(Locale.ROOT).replace('\\', '/').trim('/').takeIf { it.isNotBlank() }
+        if (skin != null) {
+            if ('/' !in skin) {
+                return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin.png")
+            }
+            folderSkin(entity.uuid, skin)?.let { return it }
+            return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/random_trainers/$skin/default.png")
+        }
         return ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/entity/npc/prof_chowfan.png")
     }
-}
 
+    private fun folderSkin(uuid: UUID, folder: String): ResourceLocation? {
+        val base = "textures/entity/random_trainers/$folder"
+        val resources = skinCache.getOrPut(folder) {
+            Minecraft.getInstance().resourceManager
+                .listResources(base) { location -> location.path.endsWith(".png") }
+                .keys
+                .sortedBy(ResourceLocation::toString)
+        }
+        if (resources.isEmpty()) return null
+        val index = Math.floorMod(uuid.hashCode(), resources.size)
+        return resources[index]
+    }
+
+    companion object {
+        private val skinCache: MutableMap<String, List<ResourceLocation>> = linkedMapOf()
+    }
+}

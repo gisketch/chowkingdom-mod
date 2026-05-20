@@ -55,6 +55,13 @@ object RandomTrainerFeature {
     fun openDialog(player: ServerPlayer, entity: RandomTrainerEntity) {
         if (player.distanceToSqr(entity) > 64.0) return
         val definition = RandomTrainerCatalog.byId(entity.rosterId)
+        val alreadyDefeated = RandomTrainerStore.hasDefeated(player, entity.rosterId)
+        val challengeAvailable = !alreadyDefeated && !entity.inTrainerBattle
+        val challengeDisabledReason = when {
+            alreadyDefeated -> "Already defeated."
+            entity.inTrainerBattle -> "Already battling."
+            else -> ""
+        }
         val fallback = definition?.dialogue?.randomOrNull()
             ?: "I am ${entity.trainerName}. Challenge me if your team is ready."
         val llmEnabled = RandomTrainerCatalog.settings().llmDialogue && NpcConfig.settings().llm.enabled
@@ -78,7 +85,8 @@ object RandomTrainerFeature {
                 talkEnabled = false,
                 responseToken = token,
                 dialogMode = "random_trainer",
-                challengeAvailable = true,
+                challengeAvailable = challengeAvailable,
+                challengeDisabledReason = challengeDisabledReason,
             ),
         )
         if (llmEnabled) {
@@ -103,6 +111,10 @@ object RandomTrainerFeature {
             .firstOrNull()
             ?: return true
         if (action != "gym_challenge") return true
+        if (RandomTrainerStore.hasDefeated(player, entity.rosterId)) {
+            SnackbarNetwork.send(player, SnackbarNotification.item("minecraft:paper", "TRAINER DEFEATED", "You already defeated ${entity.trainerName}.", SnackbarType.GENERIC, SnackbarSounds.GENERIC))
+            return true
+        }
         val result = RandomTrainerBattleService.start(player, entity)
         if (!result.started) {
             SnackbarNetwork.send(player, SnackbarNotification.item(SnackbarIcons.ERROR, "BATTLE FAILED", result.message, SnackbarType.ERROR, SnackbarSounds.ERROR))

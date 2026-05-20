@@ -34,6 +34,11 @@ object RandomTrainerStore {
         return playerState(player).defeated.toSet()
     }
 
+    fun hasDefeated(player: ServerPlayer, rosterId: String): Boolean {
+        ensureLoaded()
+        return cleanRandomTrainerId(rosterId) in playerState(player).defeated
+    }
+
     fun recordResult(player: ServerPlayer, rosterId: String, won: Boolean) {
         ensureLoaded()
         val state = playerState(player)
@@ -91,4 +96,3 @@ object RandomTrainerStore {
         TomlConfigIO.write(file, data)
     }
 }
-

@@ -17,6 +17,10 @@ object PehkuiScaleBridge {
         apply(entity, scale.height.toFloat(), scale.weight.toFloat())
     }
 
+    fun apply(entity: Entity, height: Double, weight: Double) {
+        apply(entity, height.toFloat(), weight.toFloat())
+    }
+
     fun heightScale(entity: Entity): Float = scale(entity, "HEIGHT")
 
     fun widthScale(entity: Entity): Float = scale(entity, "WIDTH")

@@ -10,7 +10,7 @@ Implement CKDM-owned wild random trainer spawning and battling without enabling 
 2. RCT API is only the battle backend.
 3. Natural trainers are transient entities and are not saved to world NBT.
 4. Right-click opens a dialogue with `CHALLENGE` and `BYE`.
-5. The generated catalog is config-data-driven and prefilled from editable seed data, defaulting to 3000 generated trainers with RCT JSON import support and repo-local importer tooling for public real roster data.
+5. The generated catalog seed remains config-data-driven, but generated filler is disabled by default with `generatedPrefillSize = 0`; current gameplay uses imported real rosters only.
 6. Player defeat tracking prevents exact defeated roster repeats until the pool is exhausted.
 7. Runtime Prism config has imported real preset rosters from RCT and public pret decomps.
 8. Imported and generated trainers use one unified data shape for category, tier, spawnability, skin folder, and body metadata.
@@ -20,6 +20,7 @@ Implement CKDM-owned wild random trainer spawning and battling without enabling 
 12. Natural spawning skips other unique trainers and weights tiers toward the player's current team level.
 13. Natural spawning is dimension-configurable and defaults to Overworld only via `allowedDimensions = ["minecraft:overworld"]`.
 14. Trainers freeze in place during Pokemon battles, stay in the world after normal battle end, and disable `CHALLENGE` only for players who already defeated that roster.
+15. Right-clicking a random trainer gives the trainer a short dialogue focus lock so it stops and looks at the player instead of walking away while the dialogue opens.
 
 ## Commands
 
@@ -35,9 +36,10 @@ Implement CKDM-owned wild random trainer spawning and battling without enabling 
 
 - Settings: `config/gisketchs_chowkingdom_mod/random_trainers/settings.toml`
 - Generation seed: `config/gisketchs_chowkingdom_mod/random_trainers/generation_seed.toml`
-- Catalog imports: `config/gisketchs_chowkingdom_mod/random_trainers/catalog/`
+- Unified catalog: `config/gisketchs_chowkingdom_mod/random_trainers/catalog/<title>/<m|f|x>/<id>.toml`
 - World defeat state: `world/data/gisketchs_chowkingdom_mod/random_trainers/state.json`
 - Importer script: `tools/import_trainers.py`
+- Catalog unifier: `tools/unify_random_trainers.py`
 
 Trainer classes, name pools, species pools, and dialogue seeds are data, not Kotlin constants. The bundled seed at `data/gisketchs_chowkingdom_mod/random_trainers/default_generation_seed.json` is copied into the editable generation seed config on first load.
 
@@ -65,9 +67,11 @@ All catalog files should normalize to:
 - `team`
 - `dialogue`
 
-Skin PNGs now resolve from `assets/gisketchs_chowkingdom_mod/textures/entity/random_trainers/<title>/<gender>/*.png`. If multiple PNGs exist in that folder, the renderer picks a deterministic variant per spawned trainer UUID. Legacy `skinSet` still resolves as `textures/entity/random_trainers/<skinSet>.png`.
+Skin PNGs resolve from `assets/gisketchs_chowkingdom_mod/textures/entity/random_trainers/<title>/<male|female>/*.png`. If multiple PNGs exist in that folder, the renderer picks one variant for the spawned trainer entity and keeps that same texture for that entity. Legacy `skinSet` still resolves as `textures/entity/random_trainers/<skinSet>.png`.
 
-`/ck randomtrainers extract` prints every loaded `title | gender | skinFolder | count` pair so skin folders can be created in batches. The repo currently has empty scaffold folders for 231 imported title/gender skin paths under `src/main/resources/assets/gisketchs_chowkingdom_mod/textures/entity/random_trainers/`.
+Catalog files are now owned by normalized trainer identity, not scraped source. IDs use `<title>_<gender-code>_<name>`, for example `swimmer_m_ricardo` or `ace_trainer_f_alexa`. Every loaded trainer is assigned `male` or `female` from explicit source gender, trainer name judgment, or gendered title class; no active catalog path uses `x` or `any`. Duplicate imports with the same title/name collapse into one trainer; known gender wins for identity and skin path while the richest available team data wins for the battle roster.
+
+`/ck randomtrainers extract` prints every loaded `title | gender | skinFolder | count` pair so skin folders can be created in batches. `tools/unify_random_trainers.py` also scaffolds every loaded `skinFolder` with a `.gitkeep` placeholder when no PNG exists yet, so Windows Explorer and Git both retain the full title/gender folder set.
 
 ## Imported Runtime Catalog
 
@@ -81,9 +85,11 @@ Current Prism runtime catalog import counts:
 - pret/pokeplatinum: 831
 - pret/pokeheartgold: 641
 
-Total imported preset roster files after excluding Gym Leaders/Leaders, Rivals, Elite Four, Champions, known named members of those groups, and double/multi trainers: 5038.
+Raw imported preset roster files before unification: 5038. After removing banned unique/multi trainer entries, assigning all remaining `x` trainers to male/female from names, and merging duplicate title/gender/name identities, the active Prism catalog has 2211 usable unified trainer TOML files and dry-run unification reports zero remaining duplicate groups.
 
-`tools/import_trainers.py` expects local checkouts under `%TEMP%/ckdm-trainer-sources`, reads RCT JSON from `%LOCALAPPDATA%/Temp/rct-mod-1.21.1/common/src/main/resources/data/rctmod/trainers` when available, and writes normalized catalog JSON under the Prism config catalog. It imports only public source data. ROM-only games still need user-owned extracted data before import.
+`tools/import_trainers.py` expects local checkouts under `%TEMP%/ckdm-trainer-sources`, reads RCT JSON from `%LOCALAPPDATA%/Temp/rct-mod-1.21.1/common/src/main/resources/data/rctmod/trainers` when available, writes raw source-bucket files to a temporary import catalog, then runs `tools/unify_random_trainers.py` into the live Prism catalog. It imports only public source data. ROM-only games still need user-owned extracted data before import.
+
+`tools/unify_random_trainers.py` can also be run directly after manual catalog edits. It writes a `catalog_backup_<timestamp>` folder before replacing the live catalog, updates `unify_report.json`, normalizes skin folders, and removes duplicate PNG payloads.
 
 Importer body-scale defaults are lore-like Pehkui multipliers, not real-world meters/kg: kid classes are smaller, strong classes such as Hiker/Black Belt/Biker are wider/taller, and ace/veteran classes are slightly larger.
 
