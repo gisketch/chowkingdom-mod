@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.minecraft.commands.arguments.EntityAnchorArgument
 import java.util.UUID
 
 class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Level) : PathfinderMob(entityType, level) {
@@ -40,10 +41,12 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
         set(value) = entityData.set(GENDER_DATA, value.trim().lowercase().ifBlank { "any" })
     var skinSet: String
         get() = entityData.get(SKIN_SET_DATA)
-        set(value) = entityData.set(SKIN_SET_DATA, cleanRandomTrainerId(value))
+        set(value) = entityData.set(SKIN_SET_DATA, cleanSkinPath(value))
     var inTrainerBattle: Boolean
         get() = entityData.get(IN_BATTLE_DATA)
         set(value) = entityData.set(IN_BATTLE_DATA, value)
+    private var dialogFocusPlayerUuid: UUID? = null
+    private var dialogFocusUntilTick: Int = 0
 
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
         super.defineSynchedData(builder)
@@ -79,22 +82,43 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
 
     override fun mobInteract(player: Player, hand: InteractionHand): InteractionResult {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS
-        if (!level().isClientSide && player is ServerPlayer) RandomTrainerFeature.openDialog(player, this)
+        if (!level().isClientSide && player is ServerPlayer) {
+            focusOn(player, DIALOG_FOCUS_TICKS)
+            RandomTrainerFeature.openDialog(player, this)
+        }
         return InteractionResult.sidedSuccess(level().isClientSide)
     }
 
     override fun aiStep() {
         super.aiStep()
-        if (inTrainerBattle) freezeBattleMotion()
+        if (inTrainerBattle || hasDialogFocus()) freezeBattleMotion()
         if (!level().isClientSide) RandomTrainerSpawner.track(this)
     }
 
     override fun customServerAiStep() {
-        if (inTrainerBattle) {
+        if (inTrainerBattle || hasDialogFocus()) {
             freezeBattleMotion()
+            lookAtFocusedPlayer()
             return
         }
         super.customServerAiStep()
+    }
+
+    fun focusOn(player: ServerPlayer, ticks: Int) {
+        dialogFocusPlayerUuid = player.uuid
+        dialogFocusUntilTick = tickCount + ticks.coerceAtLeast(20)
+        navigation.stop()
+        lookControl.setLookAt(player, 30.0f, 30.0f)
+        lookAt(EntityAnchorArgument.Anchor.EYES, player.getEyePosition())
+    }
+
+    private fun hasDialogFocus(): Boolean = dialogFocusPlayerUuid != null && tickCount <= dialogFocusUntilTick
+
+    private fun lookAtFocusedPlayer() {
+        val uuid = dialogFocusPlayerUuid ?: return
+        val player = (level() as? net.minecraft.server.level.ServerLevel)?.getPlayerByUUID(uuid) ?: return
+        lookControl.setLookAt(player, 30.0f, 30.0f)
+        lookAt(EntityAnchorArgument.Anchor.EYES, player.getEyePosition())
     }
 
     private fun freezeBattleMotion() {
@@ -154,5 +178,6 @@ class RandomTrainerEntity(entityType: EntityType<out PathfinderMob>, level: Leve
         private const val IN_BATTLE_TAG = "InTrainerBattle"
         private const val SPAWNED_AT_TAG = "SpawnedAtTick"
         private const val ORIGIN_PLAYER_TAG = "OriginPlayer"
+        private const val DIALOG_FOCUS_TICKS = 20 * 30
     }
 }

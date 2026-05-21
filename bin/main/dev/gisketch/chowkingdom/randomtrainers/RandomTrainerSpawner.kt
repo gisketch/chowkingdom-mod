@@ -75,8 +75,7 @@ object RandomTrainerSpawner {
     private fun attemptSpawn(player: ServerPlayer, settings: RandomTrainerSettings) {
         if (active.size >= settings.maxTrainersTotal.coerceAtLeast(1)) return
         if (active.values.count { it.originPlayerUuid == player.uuid } >= settings.maxTrainersPerPlayer.coerceAtLeast(1)) return
-        val topLevel = RandomTrainerBattleService.playerTopLevel(player)
-        if (topLevel <= 0) return
+        val topLevel = RandomTrainerBattleService.playerTopLevel(player).coerceAtLeast(1)
         val defeated = RandomTrainerStore.defeated(player)
         val definition = RandomTrainerCatalog.pickFor(player, topLevel, defeated) ?: return
         repeat(SPAWN_RETRIES) {

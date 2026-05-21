@@ -1,18 +1,20 @@
 package dev.gisketch.chowkingdom.randomtrainers
 
+import com.google.gson.annotations.SerializedName
 import java.util.Locale
 
 class RandomTrainerSettings(
     var enabled: Boolean = true,
     var naturalSpawning: Boolean = true,
-    var generatedCatalogSize: Int = 3000,
+    @SerializedName(value = "generatedPrefillSize", alternate = ["generatedCatalogSize", "targetCatalogSize"])
+    var generatedPrefillSize: Int = 0,
     var globalSpawnChance: Double = 0.85,
-    var spawnIntervalTicks: Int = 180,
-    var spawnIntervalTicksMaximum: Int = 2400,
+    var spawnIntervalTicks: Int = 100,
+    var spawnIntervalTicksMaximum: Int = 1200,
     var despawnTicksIfUnseen: Int = 6000,
-    var minHorizontalDistanceToPlayers: Int = 25,
-    var maxHorizontalDistanceToPlayers: Int = 70,
-    var maxVerticalDistanceToPlayers: Int = 30,
+    var minHorizontalDistanceToPlayers: Int = 12,
+    var maxHorizontalDistanceToPlayers: Int = 36,
+    var maxVerticalDistanceToPlayers: Int = 16,
     var uniqueTrainerRadius: Int = 500,
     var maxTrainersPerPlayer: Int = 12,
     var maxTrainersTotal: Int = 60,

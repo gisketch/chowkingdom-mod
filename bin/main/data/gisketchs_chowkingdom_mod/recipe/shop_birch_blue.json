@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "p": {
+      "item": "minecraft:birch_planks"
+    },
+    "w": {
+      "item": "minecraft:blue_wool"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    }
+  },
+  "pattern": [
+    " g ",
+    "pwp",
+    "ccc"
+  ],
+  "result": {
+    "id": "gisketchs_chowkingdom_mod:shop_birch_blue"
+  },
+  "show_notification": true
+}

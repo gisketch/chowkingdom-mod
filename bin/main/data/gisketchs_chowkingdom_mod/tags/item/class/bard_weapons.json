@@ -1,0 +1,1 @@
+{ "replace": false, "values": [{ "id": "#simplymore:weapon_types/rapiers", "required": false }, { "id": "bards_rpg:wooden_lute", "required": false }, { "id": "bards_rpg:spell_book/bard", "required": false }] }

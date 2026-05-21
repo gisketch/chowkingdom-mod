@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#simplyswords:light_weapons", "required": false },
+    { "id": "#simplymore:weapon_types/backhand_blades", "required": false },
+    { "id": "#simplymore:weapon_types/daggers", "required": false },
+    { "id": "#simplymore:weapon_types/rapiers", "required": false },
+    { "id": "#simplymore:weapon_types/twinblades", "required": false },
+    { "id": "#simplymore:weapon_types/cutlasses", "required": false },
+    { "id": "#simplymore:weapon_types/chakrams", "required": false },
+    { "id": "#simplymore:weapon_types/scythes", "required": false },
+    "minecraft:wooden_sword",
+    "minecraft:stone_sword",
+    "minecraft:iron_sword",
+    "minecraft:golden_sword",
+    "minecraft:diamond_sword",
+    "minecraft:netherite_sword"
+  ]
+}

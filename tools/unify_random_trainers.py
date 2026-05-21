@@ -849,6 +849,11 @@ def scaffold_skin_placeholders(root: Path, trainers: list[dict[str, Any]], dry_r
                 os.makedirs(long_path(target), exist_ok=True)
         pngs = list(target.glob("*.png")) if target.exists() else []
         placeholder = target / SKIN_PLACEHOLDER
+        if pngs and placeholder.exists():
+            stats["stale_placeholders_removed"] += 1
+            if not dry_run:
+                placeholder.unlink()
+            continue
         if not pngs and not placeholder.exists():
             stats["placeholders_written"] += 1
             if not dry_run:
@@ -876,10 +881,10 @@ def scaffold_skin_placeholders(root: Path, trainers: list[dict[str, Any]], dry_r
 
 
 def duplicate_skin_paths(root: Path) -> list[Path]:
-    by_digest: dict[str, list[Path]] = defaultdict(list)
+    by_digest: dict[tuple[Path, str], list[Path]] = defaultdict(list)
     for path in root.rglob("*.png"):
         digest = hashlib.sha1(path.read_bytes()).hexdigest()
-        by_digest[digest].append(path)
+        by_digest[(path.parent, digest)].append(path)
     removals: list[Path] = []
     for paths in by_digest.values():
         if len(paths) < 2:

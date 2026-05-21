@@ -1,0 +1,28 @@
+{
+  "replace": false,
+  "values": [
+    "gisketchs_chowkingdom_mod:shop_acacia",
+    "gisketchs_chowkingdom_mod:shop_bamboo",
+    "gisketchs_chowkingdom_mod:shop_birch",
+    "gisketchs_chowkingdom_mod:shop_cherry",
+    "gisketchs_chowkingdom_mod:shop_crimson",
+    "gisketchs_chowkingdom_mod:shop_dark_oak",
+    "gisketchs_chowkingdom_mod:shop_mangrove",
+    "gisketchs_chowkingdom_mod:shop_oak",
+    "gisketchs_chowkingdom_mod:shop_spruce",
+    "gisketchs_chowkingdom_mod:shop_warped",
+    "gisketchs_chowkingdom_mod:shop_jungle",
+    "gisketchs_chowkingdom_mod:crate_shop",
+    "gisketchs_chowkingdom_mod:shelf_shop_acacia",
+    "gisketchs_chowkingdom_mod:shelf_shop_bamboo",
+    "gisketchs_chowkingdom_mod:shelf_shop_birch",
+    "gisketchs_chowkingdom_mod:shelf_shop_cherry",
+    "gisketchs_chowkingdom_mod:shelf_shop_crimson",
+    "gisketchs_chowkingdom_mod:shelf_shop_dark_oak",
+    "gisketchs_chowkingdom_mod:shelf_shop_mangrove",
+    "gisketchs_chowkingdom_mod:shelf_shop_oak",
+    "gisketchs_chowkingdom_mod:shelf_shop_spruce",
+    "gisketchs_chowkingdom_mod:shelf_shop_warped",
+    "gisketchs_chowkingdom_mod:shelf_shop_jungle"
+  ]
+}

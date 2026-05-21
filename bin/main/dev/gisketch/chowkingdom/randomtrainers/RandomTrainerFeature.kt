@@ -54,6 +54,7 @@ object RandomTrainerFeature {
 
     fun openDialog(player: ServerPlayer, entity: RandomTrainerEntity) {
         if (player.distanceToSqr(entity) > 64.0) return
+        entity.focusOn(player, 20 * 30)
         val definition = RandomTrainerCatalog.byId(entity.rosterId)
         val alreadyDefeated = RandomTrainerStore.hasDefeated(player, entity.rosterId)
         val challengeAvailable = !alreadyDefeated && !entity.inTrainerBattle
@@ -111,6 +112,7 @@ object RandomTrainerFeature {
             .firstOrNull()
             ?: return true
         if (action != "gym_challenge") return true
+        entity.focusOn(player, 20 * 30)
         if (RandomTrainerStore.hasDefeated(player, entity.rosterId)) {
             SnackbarNetwork.send(player, SnackbarNotification.item("minecraft:paper", "TRAINER DEFEATED", "You already defeated ${entity.trainerName}.", SnackbarType.GENERIC, SnackbarSounds.GENERIC))
             return true

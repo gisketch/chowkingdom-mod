@@ -1,0 +1,12 @@
+{
+  "school": "spell_power:quen",
+  "range": 0,
+  "tier": 1,
+  "type": "MODIFIER",
+  "modifiers": [
+    {
+      "spell_pattern": "witcher_rpg:quen",
+      "cooldown_duration_deduct": 4
+    }
+  ]
+}

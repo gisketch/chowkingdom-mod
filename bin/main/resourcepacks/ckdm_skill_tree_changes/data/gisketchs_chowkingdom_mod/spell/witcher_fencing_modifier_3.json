@@ -1,0 +1,14 @@
+{
+  "school": "spell_power:witcher_melee",
+  "range": 0,
+  "tier": 1,
+  "type": "MODIFIER",
+  "modifiers": [
+    {
+      "spell_pattern": "witcher_rpg:rend",
+      "power_modifier": {
+        "critical_chance_bonus": 0.05
+      }
+    }
+  ]
+}

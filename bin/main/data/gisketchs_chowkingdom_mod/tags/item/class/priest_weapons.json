@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "paladins:acolyte_wand", "required": false },
+    { "id": "paladins:holy_wand", "required": false },
+    { "id": "paladins:diamond_holy_wand", "required": false },
+    { "id": "paladins:netherite_holy_wand", "required": false },
+    { "id": "paladins:holy_staff", "required": false },
+    { "id": "paladins:diamond_holy_staff", "required": false },
+    { "id": "paladins:netherite_holy_staff", "required": false },
+    { "id": "paladins:ruby_holy_staff", "required": false },
+    { "id": "paladins:aether_holy_staff", "required": false },
+    { "id": "paladins:spell_book/priest", "required": false },
+    { "id": "arsenal:unique_staff_heal_1", "required": false },
+    { "id": "arsenal:unique_staff_heal_2", "required": false },
+    { "id": "arsenal:unique_staff_heal_sw", "required": false },
+    { "id": "runes:healing_stone", "required": false },
+    { "id": "runes:small_rune_pouch", "required": false },
+    { "id": "runes:medium_rune_pouch", "required": false },
+    { "id": "runes:large_rune_pouch", "required": false }
+  ]
+}

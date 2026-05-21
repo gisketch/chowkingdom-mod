@@ -1,0 +1,16 @@
+{
+  "school": "spell_power:yrden",
+  "range": 0,
+  "tier": 1,
+  "type": "MODIFIER",
+  "modifiers": [
+    {
+      "impact_filters": [
+        {
+          "school": "spell_power:yrden"
+        }
+      ],
+      "spawn_duration_add": 2
+    }
+  ]
+}
