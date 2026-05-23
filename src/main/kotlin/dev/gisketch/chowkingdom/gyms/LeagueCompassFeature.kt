@@ -34,6 +34,7 @@ object LeagueCompassFeature {
     private val ITEMS: DeferredRegister<Item> = DeferredRegister.create(Registries.ITEM, ChowKingdomMod.MOD_ID)
     val LEAGUE_COMPASS: DeferredHolder<Item, LeagueCompassItem> = ITEMS.register("league_compass", Supplier { LeagueCompassItem(Item.Properties().stacksTo(1)) })
     private var nextCompassTick = 0L
+    private val trainerTargetCache: MutableMap<String, CachedLeagueNpcTarget> = linkedMapOf()
 
     fun register(modBus: IEventBus) {
         ITEMS.register(modBus)
@@ -103,19 +104,33 @@ object LeagueCompassFeature {
         val league = GymLeagueConfig.league(activeLeagueId) ?: return LeagueCompassTarget.noSignal("No active league record.", "", null)
         val encounter = GymLeagueStore.nextPlayerEncounter(player, league) ?: return LeagueCompassTarget.noSignal("League record complete.", league.displayName, null)
         val trainer = league.trainer(encounter.trainer) ?: return LeagueCompassTarget.noSignal("Next trainer paperwork is missing.", league.displayName, GymLeagueText.encounterLabel(league, encounter))
-        val npc = NpcFeature.existingNpcs(player.server, trainer.npcId)
-            .filterNot(ChowNpcEntity::isRemoved)
-            .firstOrNull()
+        val npcTarget = cachedTrainerTarget(player, trainer.npcId)
             ?: return LeagueCompassTarget.noSignal("No signal: ${trainer.name} is not posted yet.", league.displayName, GymLeagueText.encounterLabel(league, encounter))
         return LeagueCompassTarget(
             leagueName = league.displayName,
             nextFight = GymLeagueText.encounterLabel(league, encounter),
             trainerName = trainer.name,
             status = "Signal locked: Skylands stadium.",
-            dimension = npc.level().dimension().location().toString(),
-            pos = npc.blockPosition(),
-            globalPos = GlobalPos.of(npc.level().dimension(), npc.blockPosition()),
+            dimension = npcTarget.dimension,
+            pos = npcTarget.pos,
+            globalPos = npcTarget.globalPos,
         )
+    }
+
+    private fun cachedTrainerTarget(player: ServerPlayer, npcId: String): CachedLeagueNpcTarget? {
+        val now = player.server.overworld().gameTime
+        trainerTargetCache[npcId]?.takeIf { cached -> now - cached.checkedAtTick < TRAINER_TARGET_CACHE_TICKS }?.let { cached ->
+            return cached.takeIf { it.globalPos != null }
+        }
+        val npc = NpcFeature.existingNpc(player.server, npcId)?.takeUnless(ChowNpcEntity::isRemoved)
+        val target = if (npc != null) {
+            val pos = npc.blockPosition().immutable()
+            CachedLeagueNpcTarget(now, npc.level().dimension().location().toString(), pos, GlobalPos.of(npc.level().dimension(), pos))
+        } else {
+            CachedLeagueNpcTarget(now, "", null, null)
+        }
+        trainerTargetCache[npcId] = target
+        return target.takeIf { it.globalPos != null }
     }
 
     private fun decorate(stack: ItemStack, owner: UUID, target: LeagueCompassTarget) {
@@ -160,12 +175,20 @@ object LeagueCompassFeature {
         }
     }
 
+    private data class CachedLeagueNpcTarget(
+        val checkedAtTick: Long,
+        val dimension: String,
+        val pos: BlockPos?,
+        val globalPos: GlobalPos?,
+    )
+
     private const val TAG_LEAGUE_COMPASS = "ckdm_league_compass"
     private const val TAG_OWNER = "owner"
     private const val TAG_LEAGUE = "league"
     private const val TAG_NEXT = "next"
     private const val TAG_TRAINER = "trainer"
     private const val TAG_STATUS = "status"
+    private const val TRAINER_TARGET_CACHE_TICKS = 80L
 }
 
 class LeagueCompassItem(properties: Properties) : Item(properties) {

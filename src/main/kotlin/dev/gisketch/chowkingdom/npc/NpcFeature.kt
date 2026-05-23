@@ -126,6 +126,7 @@ object NpcFeature {
     private val playerMicroInteractionWitnessNudge: MutableMap<UUID, NpcMicroInteractionWitnessNudge> = linkedMapOf()
     private val npcMicroInteractionRecent: MutableMap<String, ArrayDeque<String>> = linkedMapOf()
     private val npcMicroInteractionDialogContext: MutableMap<UUID, NpcMicroInteractionDialogContext> = linkedMapOf()
+    private val npcMicroInteractionScanCooldownUntil: MutableMap<UUID, Long> = linkedMapOf()
     private val npcAutoTaskCooldownUntil: MutableMap<UUID, Long> = linkedMapOf()
     private val npcAmbientActions: MutableMap<UUID, ActiveNpcAmbientAction> = linkedMapOf()
     private val npcAmbientCooldownUntil: MutableMap<UUID, Long> = linkedMapOf()
@@ -1636,6 +1637,7 @@ object NpcFeature {
         val trainerMeetup = npcActivity == "pokemon_roam"
         if (!settings.enabled || npc.isSleeping || npc.isTalking() || (!trainerMeetup && NpcTime.activityAt(definition.schedule, level) == "sleep")) return false
         if (isAutoTaskCoolingDown(npc)) return false
+        if (isMicroInteractionScanCoolingDown(npc)) return false
         val witnesses = microInteractionWitnesses(level, npc, settings)
         if (settings.witnessRequired && witnesses.isEmpty()) return false
         if (settings.witnessRequired && witnesses.any { player -> !hasWitnessedMicroInteractionToday(level, player) } && witnesses.none { player -> witnessNudgeReady(level, player, settings) }) return false
@@ -1648,7 +1650,8 @@ object NpcFeature {
             else -> settings.radius
         }
         val radiusSqr = radius * radius
-        val other = level.getEntities(NPC_ENTITY.get()) { other ->
+        val scanBox = npc.boundingBox.inflate(radius.coerceAtLeast(1.0))
+        val other = level.getEntities(NPC_ENTITY.get(), scanBox) { other ->
             other.uuid != npc.uuid &&
                 other.isAlive &&
                 !other.isSleeping &&
@@ -1666,7 +1669,10 @@ object NpcFeature {
                     (npcMicroInteractionPairCooldownUntil[npcMicroInteractionPairKey(definition.id, otherDefinition.id)] ?: 0L) <= level.dayTime
             }?.let { other to it } }
             .minByOrNull { (other, _) -> other.distanceToSqr(npc) }
-            ?: return false
+        if (other == null) {
+            markMicroInteractionScanCooldown(npc)
+            return false
+        }
         startNpcMicroInteraction(level, npc, definition, other.first, other.second, settings, areaKey)
         return true
     }
@@ -1975,6 +1981,20 @@ object NpcFeature {
         val level = npc.level()
         val extraTicks = NPC_AUTO_TASK_COOLDOWN_MIN_TICKS + level.random.nextInt((NPC_AUTO_TASK_COOLDOWN_MAX_TICKS - NPC_AUTO_TASK_COOLDOWN_MIN_TICKS + 1).toInt())
         npcAutoTaskCooldownUntil[npc.uuid] = level.gameTime + taskTicks + extraTicks
+    }
+
+    private fun isMicroInteractionScanCoolingDown(npc: ChowNpcEntity): Boolean {
+        val level = npc.level()
+        val untilTick = npcMicroInteractionScanCooldownUntil[npc.uuid] ?: return false
+        if (level.gameTime < untilTick) return true
+        npcMicroInteractionScanCooldownUntil.remove(npc.uuid)
+        return false
+    }
+
+    private fun markMicroInteractionScanCooldown(npc: ChowNpcEntity) {
+        val level = npc.level()
+        val delayTicks = NPC_MICRO_INTERACTION_SCAN_MIN_TICKS + level.random.nextInt((NPC_MICRO_INTERACTION_SCAN_MAX_TICKS - NPC_MICRO_INTERACTION_SCAN_MIN_TICKS + 1).toInt())
+        npcMicroInteractionScanCooldownUntil[npc.uuid] = level.gameTime + delayTicks
     }
 
     fun ambientFocus(npc: ChowNpcEntity): NpcAmbientFocus? {
@@ -4376,10 +4396,12 @@ object NpcFeature {
     private const val NPC_MICRO_INTERACTION_DISTANCE_SQR = 2.5 * 2.5
     private const val NPC_MICRO_INTERACTION_SPEED = 0.75
     private const val NPC_MICRO_INTERACTION_BALLOON_TICKS = 100
-    private const val NPC_MICRO_INTERACTION_AREA_CELL_SIZE = 24
-    private const val NPC_MICRO_INTERACTION_RECENT_MEMORY = 48
-    private const val NPC_MICRO_INTERACTION_INTERRUPT_MEMORY_TICKS = 20L * 30L
-    private const val NPC_AUTO_TASK_COOLDOWN_MIN_TICKS = 200L
+private const val NPC_MICRO_INTERACTION_AREA_CELL_SIZE = 24
+private const val NPC_MICRO_INTERACTION_RECENT_MEMORY = 48
+private const val NPC_MICRO_INTERACTION_INTERRUPT_MEMORY_TICKS = 20L * 30L
+private const val NPC_MICRO_INTERACTION_SCAN_MIN_TICKS = 20L
+private const val NPC_MICRO_INTERACTION_SCAN_MAX_TICKS = 60L
+private const val NPC_AUTO_TASK_COOLDOWN_MIN_TICKS = 200L
     private const val NPC_AUTO_TASK_COOLDOWN_MAX_TICKS = 300L
     private const val NPC_AMBIENT_MIN_TICKS = 80L
     private const val NPC_AMBIENT_MAX_TICKS = 220L
