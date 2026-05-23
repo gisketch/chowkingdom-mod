@@ -33,6 +33,7 @@ object BattlepassMissionProgressStore {
     private val completed: MutableMap<String, MutableMap<String, MutableMap<String, MutableSet<String>>>> = linkedMapOf()
     private val rotations: MutableMap<String, MutableMap<String, StoredRotation>> = linkedMapOf()
     private var loaded = false
+    private var rotationDirty = false
 
     private val file: Path
         get() = BattlepassWorldData.battlepassFile("mission_progress")
@@ -84,8 +85,15 @@ object BattlepassMissionProgressStore {
     fun activeMissionKeys(pass: BattlepassPassDefinition): List<String> {
         if (!loaded) load()
         val keys = activeEntries(pass).map { entry -> entry.key }
-        save()
+        if (rotationDirty) save()
         return keys
+    }
+
+    fun activeMissionKeysByPass(passes: List<BattlepassPassDefinition>): Map<String, List<String>> {
+        if (!loaded) load()
+        val keysByPass = passes.associate { pass -> pass.id to activeEntries(pass).map { entry -> entry.key } }
+        if (rotationDirty) save()
+        return keysByPass
     }
 
     fun completedKeysForPass(playerId: UUID, pass: BattlepassPassDefinition): List<String> {
@@ -389,6 +397,7 @@ object BattlepassMissionProgressStore {
                 }
             }
             passRotations[scope.id] = StoredRotation(periodKey, activeKeys, usageCounts)
+            rotationDirty = true
         }
 
         val activeKeys = passRotations[scope.id]?.activeKeys?.toSet().orEmpty()
@@ -474,6 +483,7 @@ object BattlepassMissionProgressStore {
 
     private fun save() {
         TomlConfigIO.write(file, StoredMissionProgress(progress, completed, rotations))
+        rotationDirty = false
     }
 
     private data class StoredRotation(

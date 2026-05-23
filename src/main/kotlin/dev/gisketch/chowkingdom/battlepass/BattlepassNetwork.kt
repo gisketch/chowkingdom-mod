@@ -47,7 +47,12 @@ object BattlepassNetwork {
 
     fun syncAllPlayers() {
         val server = ServerLifecycleHooks.getCurrentServer() ?: return
-        server.playerList.players.forEach(::syncTo)
+        val players = server.playerList.players
+        val snapshot = createSyncSnapshot(players)
+        players.forEach { player ->
+            PacketDistributor.sendToPlayer(player, snapshot.payloadFor(player.uuid))
+            NpcQuestService.syncTo(player)
+        }
     }
 
     fun notifyMissionCompletion(player: ServerPlayer, passId: String, missionKey: String, title: String, scope: BattlepassMissionScope, kind: String) {
@@ -103,20 +108,25 @@ object BattlepassNetwork {
     }
 
     private fun createSyncPayload(receiver: ServerPlayer): BattlepassSyncPayload {
+        return createSyncSnapshot(receiver.server.playerList.players).payloadFor(receiver.uuid)
+    }
+
+    private fun createSyncSnapshot(online: List<ServerPlayer>): BattlepassSyncSnapshot {
         val passes = BattlepassPassRegistry.all().toList()
         val passIds = passes.map { pass -> pass.id }
-        receiver.server.playerList.players.forEach(CobblemonBattlepassIntegration::refreshCobblemonProgress)
-        val activeMissionKeysByPass = passes.associate { pass -> pass.id to BattlepassMissionProgressStore.activeMissionKeys(pass) }
-        val onlinePlayers = receiver.server.playerList.players.map { player ->
+        online.forEach(CobblemonBattlepassIntegration::refreshCobblemonProgress)
+        val activeMissionKeysByPass = BattlepassMissionProgressStore.activeMissionKeysByPass(passes)
+        val onlinePlayers = online.map { player ->
+            val missionProgressByPass = passes.associate { pass -> pass.id to BattlepassMissionProgressStore.progressForPass(player.uuid, pass) }
             BattlepassPlayerProgressPayload(
                 player.uuid,
                 player.gameProfile.name,
                 passIds.associateWith { passId -> BattlepassXpStore.getXp(player.uuid, passId) },
                 passIds.associateWith { passId -> BattlepassXpStore.claimedTiers(player.uuid, passId).sorted() },
-                passes.associate { pass -> pass.id to BattlepassMissionProgressStore.progressForPass(player.uuid, pass) },
+                missionProgressByPass,
                 passes.associate { pass -> pass.id to BattlepassMissionProgressStore.completedKeysForPass(player.uuid, pass) },
                 CobblemonBattlepassIntegration.uniqueCaughtSpecies(player),
-                eventProgress(player, passes, "minecraft:monster_killed"),
+                eventProgress(passes, missionProgressByPass, "minecraft:monster_killed"),
                 ReviveStore.incapacitatedCount(player.uuid),
                 player.stats.getValue(Stats.CUSTOM.get(Stats.DEATHS)),
                 ReviveStore.revivedCount(player.uuid),
@@ -128,16 +138,26 @@ object BattlepassNetwork {
         }
         onlinePlayers.forEach { player -> lastKnownPlayerProgress[player.uuid] = player }
         val players = (lastKnownPlayerProgress.values + onlinePlayers).associateBy { player -> player.uuid }.values.toList()
-        return BattlepassSyncPayload(passes.map { pass -> gson.toJson(pass) }, players, activeMissionKeysByPass, receiver.uuid, ShippingBinStore.totalChowcoinsSold())
+        return BattlepassSyncSnapshot(passes.map { pass -> gson.toJson(pass) }, players, activeMissionKeysByPass, ShippingBinStore.totalChowcoinsSold())
     }
 
-    private fun eventProgress(player: ServerPlayer, passes: List<BattlepassPassDefinition>, eventId: String): Int =
+    private fun eventProgress(passes: List<BattlepassPassDefinition>, missionProgressByPass: Map<String, Map<String, Int>>, eventId: String): Int =
         passes.maxOfOrNull { pass ->
-            val progress = BattlepassMissionProgressStore.progressForPass(player.uuid, pass)
+            val progress = missionProgressByPass[pass.id].orEmpty()
             BattlepassMissionService.allEntries(pass)
                 .filter { entry -> entry.event.event == eventId }
                 .maxOfOrNull { entry -> progress[entry.key] ?: 0 } ?: 0
         } ?: 0
+
+    private data class BattlepassSyncSnapshot(
+        val passesJson: List<String>,
+        val players: List<BattlepassPlayerProgressPayload>,
+        val activeMissionKeysByPass: Map<String, List<String>>,
+        val totalShippedChowcoins: Long,
+    ) {
+        fun payloadFor(receiverId: UUID): BattlepassSyncPayload =
+            BattlepassSyncPayload(passesJson, players, activeMissionKeysByPass, receiverId, totalShippedChowcoins)
+    }
 }
 
 object BattlepassSyncRequestPayload : CustomPacketPayload {
