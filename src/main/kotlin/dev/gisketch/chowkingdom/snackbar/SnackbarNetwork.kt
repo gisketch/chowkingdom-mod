@@ -48,9 +48,10 @@ object SnackbarNetwork {
     }
 
     fun sendToAllKnown(server: MinecraftServer, notification: SnackbarNotification) {
-        val onlineIds = server.playerList.players.map { it.uuid }.toSet()
-        server.playerList.players.forEach { player -> send(player, notification) }
-        SnackbarStore.knownPlayerIds().filter { it !in onlineIds }.forEach { playerId -> SnackbarStore.queue(playerId, notification) }
+        val players = server.playerList.players
+        val onlineIds = players.mapTo(mutableSetOf()) { player -> player.uuid }
+        players.forEach { player -> send(player, notification) }
+        SnackbarStore.queueAll(SnackbarStore.knownPlayerIds().filter { playerId -> playerId !in onlineIds }, notification)
     }
 
     fun clear(player: ServerPlayer) {

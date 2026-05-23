@@ -47,13 +47,21 @@ object SnackbarStore {
     }
 
     fun queue(playerId: UUID, notification: SnackbarNotification) {
+        queueAll(listOf(playerId), notification)
+    }
+
+    fun queueAll(playerIds: Iterable<UUID>, notification: SnackbarNotification) {
         ensureLoaded()
-        val key = playerId.toString().lowercase()
-        val list = pending.getOrPut(key) { mutableListOf() }
-        list += StoredSnackbar.from(notification)
-        while (list.size > MAX_PENDING_PER_PLAYER) list.removeAt(0)
-        knownPlayers += key
-        save()
+        val stored = StoredSnackbar.from(notification)
+        var changed = false
+        playerIds.map { playerId -> playerId.toString().lowercase() }.distinct().forEach { key ->
+            val list = pending.getOrPut(key) { mutableListOf() }
+            list += stored
+            while (list.size > MAX_PENDING_PER_PLAYER) list.removeAt(0)
+            knownPlayers += key
+            changed = true
+        }
+        if (changed) save()
     }
 
     fun drain(player: ServerPlayer): List<SnackbarNotification> {
