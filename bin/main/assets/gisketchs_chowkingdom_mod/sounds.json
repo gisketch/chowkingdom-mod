@@ -1,0 +1,588 @@
+{
+  "parry": {
+    "subtitle": "subtitle.gisketchs_chowkingdom_mod.parry",
+    "sounds": [
+      "gisketchs_chowkingdom_mod:parry"
+    ]
+  },
+  "npc.animalese.high.sound01": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound01"
+    ]
+  },
+  "npc.animalese.high.sound02": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound02"
+    ]
+  },
+  "npc.animalese.high.sound03": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound03"
+    ]
+  },
+  "npc.animalese.high.sound04": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound04"
+    ]
+  },
+  "npc.animalese.high.sound05": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound05"
+    ]
+  },
+  "npc.animalese.high.sound06": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound06"
+    ]
+  },
+  "npc.animalese.high.sound07": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound07"
+    ]
+  },
+  "npc.animalese.high.sound08": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound08"
+    ]
+  },
+  "npc.animalese.high.sound09": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound09"
+    ]
+  },
+  "npc.animalese.high.sound10": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound10"
+    ]
+  },
+  "npc.animalese.high.sound11": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound11"
+    ]
+  },
+  "npc.animalese.high.sound12": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound12"
+    ]
+  },
+  "npc.animalese.high.sound13": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound13"
+    ]
+  },
+  "npc.animalese.high.sound14": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound14"
+    ]
+  },
+  "npc.animalese.high.sound15": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound15"
+    ]
+  },
+  "npc.animalese.high.sound16": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound16"
+    ]
+  },
+  "npc.animalese.high.sound17": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound17"
+    ]
+  },
+  "npc.animalese.high.sound18": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound18"
+    ]
+  },
+  "npc.animalese.high.sound19": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound19"
+    ]
+  },
+  "npc.animalese.high.sound20": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound20"
+    ]
+  },
+  "npc.animalese.high.sound21": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound21"
+    ]
+  },
+  "npc.animalese.high.sound22": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound22"
+    ]
+  },
+  "npc.animalese.high.sound23": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound23"
+    ]
+  },
+  "npc.animalese.high.sound24": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound24"
+    ]
+  },
+  "npc.animalese.high.sound25": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound25"
+    ]
+  },
+  "npc.animalese.high.sound26": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound26"
+    ]
+  },
+  "npc.animalese.high.sound27": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound27"
+    ]
+  },
+  "npc.animalese.high.sound28": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound28"
+    ]
+  },
+  "npc.animalese.high.sound30": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/high/sound30"
+    ]
+  },
+  "npc.animalese.med.sound01": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound01"
+    ]
+  },
+  "npc.animalese.med.sound02": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound02"
+    ]
+  },
+  "npc.animalese.med.sound03": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound03"
+    ]
+  },
+  "npc.animalese.med.sound04": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound04"
+    ]
+  },
+  "npc.animalese.med.sound05": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound05"
+    ]
+  },
+  "npc.animalese.med.sound06": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound06"
+    ]
+  },
+  "npc.animalese.med.sound07": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound07"
+    ]
+  },
+  "npc.animalese.med.sound08": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound08"
+    ]
+  },
+  "npc.animalese.med.sound09": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound09"
+    ]
+  },
+  "npc.animalese.med.sound10": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound10"
+    ]
+  },
+  "npc.animalese.med.sound11": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound11"
+    ]
+  },
+  "npc.animalese.med.sound12": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound12"
+    ]
+  },
+  "npc.animalese.med.sound13": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound13"
+    ]
+  },
+  "npc.animalese.med.sound14": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound14"
+    ]
+  },
+  "npc.animalese.med.sound15": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound15"
+    ]
+  },
+  "npc.animalese.med.sound16": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound16"
+    ]
+  },
+  "npc.animalese.med.sound17": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound17"
+    ]
+  },
+  "npc.animalese.med.sound18": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound18"
+    ]
+  },
+  "npc.animalese.med.sound19": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound19"
+    ]
+  },
+  "npc.animalese.med.sound20": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound20"
+    ]
+  },
+  "npc.animalese.med.sound21": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound21"
+    ]
+  },
+  "npc.animalese.med.sound22": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound22"
+    ]
+  },
+  "npc.animalese.med.sound23": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound23"
+    ]
+  },
+  "npc.animalese.med.sound24": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound24"
+    ]
+  },
+  "npc.animalese.med.sound25": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound25"
+    ]
+  },
+  "npc.animalese.med.sound26": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound26"
+    ]
+  },
+  "npc.animalese.med.sound27": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound27"
+    ]
+  },
+  "npc.animalese.med.sound28": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound28"
+    ]
+  },
+  "npc.animalese.med.sound30": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/med/sound30"
+    ]
+  },
+  "npc.animalese.low.sound01": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound01"
+    ]
+  },
+  "npc.animalese.low.sound02": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound02"
+    ]
+  },
+  "npc.animalese.low.sound03": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound03"
+    ]
+  },
+  "npc.animalese.low.sound04": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound04"
+    ]
+  },
+  "npc.animalese.low.sound05": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound05"
+    ]
+  },
+  "npc.animalese.low.sound06": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound06"
+    ]
+  },
+  "npc.animalese.low.sound07": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound07"
+    ]
+  },
+  "npc.animalese.low.sound08": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound08"
+    ]
+  },
+  "npc.animalese.low.sound09": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound09"
+    ]
+  },
+  "npc.animalese.low.sound10": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound10"
+    ]
+  },
+  "npc.animalese.low.sound11": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound11"
+    ]
+  },
+  "npc.animalese.low.sound12": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound12"
+    ]
+  },
+  "npc.animalese.low.sound13": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound13"
+    ]
+  },
+  "npc.animalese.low.sound14": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound14"
+    ]
+  },
+  "npc.animalese.low.sound15": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound15"
+    ]
+  },
+  "npc.animalese.low.sound16": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound16"
+    ]
+  },
+  "npc.animalese.low.sound17": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound17"
+    ]
+  },
+  "npc.animalese.low.sound18": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound18"
+    ]
+  },
+  "npc.animalese.low.sound19": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound19"
+    ]
+  },
+  "npc.animalese.low.sound20": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound20"
+    ]
+  },
+  "npc.animalese.low.sound21": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound21"
+    ]
+  },
+  "npc.animalese.low.sound22": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound22"
+    ]
+  },
+  "npc.animalese.low.sound23": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound23"
+    ]
+  },
+  "npc.animalese.low.sound24": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound24"
+    ]
+  },
+  "npc.animalese.low.sound25": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound25"
+    ]
+  },
+  "npc.animalese.low.sound26": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound26"
+    ]
+  },
+  "npc.animalese.low.sound27": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound27"
+    ]
+  },
+  "npc.animalese.low.sound28": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound28"
+    ]
+  },
+  "npc.animalese.low.sound30": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/low/sound30"
+    ]
+  },
+  "npc.animalese.lowest.sound01": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound01"
+    ]
+  },
+  "npc.animalese.lowest.sound02": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound02"
+    ]
+  },
+  "npc.animalese.lowest.sound03": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound03"
+    ]
+  },
+  "npc.animalese.lowest.sound04": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound04"
+    ]
+  },
+  "npc.animalese.lowest.sound05": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound05"
+    ]
+  },
+  "npc.animalese.lowest.sound06": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound06"
+    ]
+  },
+  "npc.animalese.lowest.sound07": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound07"
+    ]
+  },
+  "npc.animalese.lowest.sound08": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound08"
+    ]
+  },
+  "npc.animalese.lowest.sound09": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound09"
+    ]
+  },
+  "npc.animalese.lowest.sound10": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound10"
+    ]
+  },
+  "npc.animalese.lowest.sound11": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound11"
+    ]
+  },
+  "npc.animalese.lowest.sound12": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound12"
+    ]
+  },
+  "npc.animalese.lowest.sound13": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound13"
+    ]
+  },
+  "npc.animalese.lowest.sound14": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound14"
+    ]
+  },
+  "npc.animalese.lowest.sound15": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound15"
+    ]
+  },
+  "npc.animalese.lowest.sound16": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound16"
+    ]
+  },
+  "npc.animalese.lowest.sound17": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound17"
+    ]
+  },
+  "npc.animalese.lowest.sound18": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound18"
+    ]
+  },
+  "npc.animalese.lowest.sound19": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound19"
+    ]
+  },
+  "npc.animalese.lowest.sound20": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound20"
+    ]
+  },
+  "npc.animalese.lowest.sound21": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound21"
+    ]
+  },
+  "npc.animalese.lowest.sound22": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound22"
+    ]
+  },
+  "npc.animalese.lowest.sound23": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound23"
+    ]
+  },
+  "npc.animalese.lowest.sound24": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound24"
+    ]
+  },
+  "npc.animalese.lowest.sound25": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound25"
+    ]
+  },
+  "npc.animalese.lowest.sound26": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound26"
+    ]
+  },
+  "npc.animalese.lowest.sound27": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound27"
+    ]
+  },
+  "npc.animalese.lowest.sound28": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound28"
+    ]
+  },
+  "npc.animalese.lowest.sound30": {
+    "sounds": [
+      "gisketchs_chowkingdom_mod:npc/animalese/lowest/sound30"
+    ]
+  }
+}

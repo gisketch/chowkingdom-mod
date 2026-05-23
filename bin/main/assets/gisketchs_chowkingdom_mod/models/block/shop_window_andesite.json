@@ -1,0 +1,7 @@
+{
+  "parent": "gisketchs_chowkingdom_mod:block/shop_window",
+  "textures": {
+    "particle": "gisketchs_chowkingdom_mod:block/window_sill/andesite",
+    "texture": "gisketchs_chowkingdom_mod:block/window_sill/andesite"
+  }
+}

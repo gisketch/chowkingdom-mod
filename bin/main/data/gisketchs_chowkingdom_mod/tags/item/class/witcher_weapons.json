@@ -1,0 +1,1 @@
+{ "replace": false, "values": ["minecraft:iron_sword", "minecraft:diamond_sword", "minecraft:netherite_sword", { "id": "witcher_rpg:master_spell_book", "required": false }] }

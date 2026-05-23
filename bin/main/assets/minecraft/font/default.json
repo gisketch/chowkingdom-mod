@@ -1,0 +1,22 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "gisketchs_chowkingdom_mod:gui/fonts/discord.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": [
+        "\ue100"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "gisketchs_chowkingdom_mod:gui/icons/chat_bubble_orange.png",
+      "ascent": 8,
+      "height": 8,
+      "chars": [
+        "\ue101"
+      ]
+    }
+  ]
+}

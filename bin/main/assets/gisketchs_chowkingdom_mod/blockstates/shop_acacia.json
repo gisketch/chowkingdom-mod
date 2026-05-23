@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model" : "gisketchs_chowkingdom_mod:block/shop_acacia"},
+    "facing=east": { "model" : "gisketchs_chowkingdom_mod:block/shop_acacia", "y":  90},
+    "facing=south": { "model" : "gisketchs_chowkingdom_mod:block/shop_acacia", "y":  180},
+    "facing=west": { "model" : "gisketchs_chowkingdom_mod:block/shop_acacia", "y":  270}
+  }
+}

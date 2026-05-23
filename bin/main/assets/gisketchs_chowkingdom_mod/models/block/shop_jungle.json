@@ -1,0 +1,7 @@
+{
+  "parent": "gisketchs_chowkingdom_mod:block/shop",
+  "textures": {
+    "4": "gisketchs_chowkingdom_mod:block/angled_shop/jungle_angled",
+    "particle": "minecraft:block/jungle_planks"
+  }
+}

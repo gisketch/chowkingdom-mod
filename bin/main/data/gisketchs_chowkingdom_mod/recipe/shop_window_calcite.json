@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "r": {
+      "item": "minecraft:calcite"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    }
+  },
+  "pattern": [
+    "   ",
+    " r ",
+    "ccc"
+  ],
+  "result": {
+    "id": "gisketchs_chowkingdom_mod:shop_window_calcite"
+  },
+  "show_notification": true
+}

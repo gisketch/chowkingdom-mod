@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "p": {
+      "item": "minecraft:oak_planks"
+    },
+    "w": {
+      "item": "minecraft:white_wool"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    }
+  },
+  "pattern": [
+    " g ",
+    "pwp",
+    "ccc"
+  ],
+  "result": {
+    "id": "gisketchs_chowkingdom_mod:shop_oak_white"
+  },
+  "show_notification": true
+}

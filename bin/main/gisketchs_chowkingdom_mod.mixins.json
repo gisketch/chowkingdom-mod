@@ -1,0 +1,46 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.gisketch.chowkingdom.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BlockFactoryDodgeRollMessageMixin",
+    "BlockFactoryRollAttachmentMixin",
+    "GameProfileMixin",
+    "NoiseBasedChunkGeneratorSeedMixin",
+    "RandomStateAccessor",
+    "SkylandsBiomeAliasMixin",
+    "SkyArchipelagoSeedMixin",
+    "SpellBindingScreenHandlerClassLockMixin"
+  ],
+  "client": [
+    "AbstractContainerScreenAccessor",
+    "AbstractContainerScreenClassLockMixin",
+    "AzureLibArmorAnimatorAccessorMixin",
+    "BlockFactoryRollHudMixin",
+    "ClientPacketListenerMixin",
+    "EMFAnimationParagliderPauseMixin",
+    "EntityRendererMixin",
+    "GuiGraphicsAccessor",
+    "KeyboardHandlerMixin",
+    "HumanoidModelParagliderPoseMixin",
+    "LivingEntityRendererMixin",
+    "PlayerModelParagliderPoseMixin",
+    "PlayerRendererRevivePoseMixin",
+    "PunchyArmRendererParryMixin",
+    "PunchyConfigParryMixin",
+    "SimplyTooltipsGifRecorderMixin",
+    "SystemToastMixin",
+    "XaeroMinimapNpcReaderMixin",
+    "XaeroMinimapNpcRendererMixin",
+    "XaeroWorldMapNpcReaderMixin",
+    "XaeroWorldMapNpcRendererMixin",
+    "YuushyaStartupChatMixin",
+    "YuushyaStartupPacketMixin",
+    "XaeroRadarColorHelperMixin",
+    "XaeroRadarIconManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

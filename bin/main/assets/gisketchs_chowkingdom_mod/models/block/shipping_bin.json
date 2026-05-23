@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "gisketchs_chowkingdom_mod:block/shipping_bin_bottom",
+    "side": "gisketchs_chowkingdom_mod:block/shipping_bin_side",
+    "top": "gisketchs_chowkingdom_mod:block/shipping_bin_lid"
+  }
+}

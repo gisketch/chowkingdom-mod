@@ -1,0 +1,7 @@
+{
+  "parent": "gisketchs_chowkingdom_mod:block/rug_shop/rug_shop_east",
+  "textures": {
+    "all": "gisketchs_chowkingdom_mod:block/rug/purple",
+    "particle": "gisketchs_chowkingdom_mod:block/rug/purple"
+  }
+}

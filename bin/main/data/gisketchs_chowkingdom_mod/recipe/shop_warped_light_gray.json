@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "p": {
+      "item": "minecraft:warped_planks"
+    },
+    "w": {
+      "item": "minecraft:light_gray_wool"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    }
+  },
+  "pattern": [
+    " g ",
+    "pwp",
+    "ccc"
+  ],
+  "result": {
+    "id": "gisketchs_chowkingdom_mod:shop_warped_light_gray"
+  },
+  "show_notification": true
+}

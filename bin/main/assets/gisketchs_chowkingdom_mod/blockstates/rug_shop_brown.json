@@ -1,0 +1,41 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_brown_main"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_brown_east"
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_brown_north"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_brown_south"
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_brown_west"
+      },
+      "when": {
+        "west": "true"
+      }
+    }
+  ]
+}

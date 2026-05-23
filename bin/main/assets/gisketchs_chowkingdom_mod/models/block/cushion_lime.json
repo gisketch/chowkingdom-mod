@@ -1,0 +1,6 @@
+{
+  "parent": "gisketchs_chowkingdom_mod:block/cushion",
+  "textures": {
+    "1": "gisketchs_chowkingdom_mod:block/cushion/lime"
+  }
+}

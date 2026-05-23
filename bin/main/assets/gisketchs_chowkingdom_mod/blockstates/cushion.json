@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "colour=black": { "model": "gisketchs_chowkingdom_mod:block/cushion_black" },
+    "colour=white": { "model": "gisketchs_chowkingdom_mod:block/cushion_white" },
+    "colour=red": { "model": "gisketchs_chowkingdom_mod:block/cushion_red" },
+    "colour=blue": { "model": "gisketchs_chowkingdom_mod:block/cushion_blue" },
+    "colour=purple": { "model": "gisketchs_chowkingdom_mod:block/cushion_purple" },
+    "colour=green": { "model": "gisketchs_chowkingdom_mod:block/cushion_green" },
+    "colour=lime": { "model": "gisketchs_chowkingdom_mod:block/cushion_lime" },
+    "colour=orange": { "model": "gisketchs_chowkingdom_mod:block/cushion_orange" },
+    "colour=grey": { "model": "gisketchs_chowkingdom_mod:block/cushion_grey" },
+    "colour=light_grey": { "model": "gisketchs_chowkingdom_mod:block/cushion_light_grey" },
+    "colour=brown": { "model": "gisketchs_chowkingdom_mod:block/cushion_brown" },
+    "colour=yellow": { "model": "gisketchs_chowkingdom_mod:block/cushion_yellow" },
+    "colour=light_blue": { "model": "gisketchs_chowkingdom_mod:block/cushion_light_blue" },
+    "colour=cyan": { "model": "gisketchs_chowkingdom_mod:block/cushion_cyan" },
+    "colour=magenta": { "model": "gisketchs_chowkingdom_mod:block/cushion_magenta" },
+    "colour=pink": { "model": "gisketchs_chowkingdom_mod:block/cushion_pink" }
+  }
+}

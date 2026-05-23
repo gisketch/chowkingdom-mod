@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "gisketchs_chowkingdom_mod:item/kanto_ash_chestplate"
+  }
+}

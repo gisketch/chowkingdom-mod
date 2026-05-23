@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "g": {
+      "item": "minecraft:glass"
+    },
+    "p": {
+      "item": "minecraft:bamboo_planks"
+    },
+    "w": {
+      "item": "minecraft:green_wool"
+    },
+    "c": {
+      "item": "minecraft:chest"
+    }
+  },
+  "pattern": [
+    " g ",
+    "pwp",
+    "ccc"
+  ],
+  "result": {
+    "id": "gisketchs_chowkingdom_mod:shop_bamboo_green"
+  },
+  "show_notification": true
+}

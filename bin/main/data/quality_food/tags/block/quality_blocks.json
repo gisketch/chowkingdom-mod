@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#cobblemon:crops", "required": false },
+    { "id": "#cobblemon:berry_crops", "required": false },
+    { "id": "#cobblemon:berries", "required": false },
+    { "id": "#cobblemon:apricorns", "required": false },
+    { "id": "#cobblemon:apricorn_trees", "required": false }
+  ]
+}

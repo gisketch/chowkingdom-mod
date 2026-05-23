@@ -1,0 +1,41 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_lime_main"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_lime_east"
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_lime_north"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_lime_south"
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "gisketchs_chowkingdom_mod:block/rug_shop_lime_west"
+      },
+      "when": {
+        "west": "true"
+      }
+    }
+  ]
+}

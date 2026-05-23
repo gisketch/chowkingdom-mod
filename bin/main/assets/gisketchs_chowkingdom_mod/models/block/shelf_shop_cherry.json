@@ -1,0 +1,7 @@
+{
+  "parent": "gisketchs_chowkingdom_mod:block/shelf/shelf_shop",
+  "textures": {
+    "all": "gisketchs_chowkingdom_mod:block/shelf/shelf_cherry",
+    "particle": "minecraft:block/cherry_planks"
+  }
+}

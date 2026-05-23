@@ -1,0 +1,12 @@
+{
+  "school": "spell_power:aard",
+  "range": 0,
+  "tier": 1,
+  "type": "MODIFIER",
+  "modifiers": [
+    {
+      "spell_pattern": "witcher_rpg:aard",
+      "range_add": 2
+    }
+  ]
+}
