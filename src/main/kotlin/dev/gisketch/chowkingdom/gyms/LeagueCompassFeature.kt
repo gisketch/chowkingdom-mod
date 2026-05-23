@@ -119,7 +119,7 @@ object LeagueCompassFeature {
 
     private fun cachedTrainerTarget(player: ServerPlayer, npcId: String): CachedLeagueNpcTarget? {
         val now = player.server.overworld().gameTime
-        trainerTargetCache[npcId]?.takeIf { cached -> now - cached.checkedAtTick < TRAINER_TARGET_CACHE_TICKS }?.let { cached ->
+        trainerTargetCache[npcId]?.takeIf { cached -> now >= cached.checkedAtTick && now - cached.checkedAtTick < TRAINER_TARGET_CACHE_TICKS }?.let { cached ->
             return cached.takeIf { it.globalPos != null }
         }
         val npc = NpcFeature.existingNpc(player.server, npcId)?.takeUnless(ChowNpcEntity::isRemoved)
