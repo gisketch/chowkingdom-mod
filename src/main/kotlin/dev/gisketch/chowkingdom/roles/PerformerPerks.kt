@@ -9,9 +9,12 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import java.util.UUID
 import kotlin.math.ceil
 
 object PerformerPerks {
+    private val happyBoostScanCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
+
     fun friendshipDelta(player: ServerPlayer, delta: Int): Int {
         if (delta <= 0) return delta
         val bonus = RolePerks.configuredJobMaxBonusPercent(player, "charisma_lite").coerceAtLeast(0.0)
@@ -39,6 +42,9 @@ object PerformerPerks {
     fun onPlayerTick(player: ServerPlayer) {
         if (RolePerks.jobPerks(player, "happy_boost_lite").isEmpty()) return
         val level = player.level() as? ServerLevel ?: return
+        val now = level.gameTime
+        if (now < (happyBoostScanCooldownUntilTicks[player.uuid] ?: 0L)) return
+        happyBoostScanCooldownUntilTicks[player.uuid] = now + HAPPY_BOOST_SCAN_INTERVAL_TICKS
         val hasNpcNearby = level.getEntitiesOfClass(ChowNpcEntity::class.java, player.boundingBox.inflate(HAPPY_BOOST_RADIUS)).isNotEmpty()
         if (!hasNpcNearby) return
         val amplifier = happyBoostAmplifier(JobLevels.jobLevel(player))
@@ -57,4 +63,5 @@ object PerformerPerks {
     private const val ENCORE_DAILY_CAP = 50
     private const val HAPPY_BOOST_RADIUS = 24.0
     private const val HAPPY_BOOST_DURATION_TICKS = 60
+    private const val HAPPY_BOOST_SCAN_INTERVAL_TICKS = 20L
 }

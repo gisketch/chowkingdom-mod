@@ -27,6 +27,7 @@ internal object SpiritMediumPerks {
     private val SOUL_SPEED_MODIFIER = ResourceLocation.parse("${ChowKingdomMod.MOD_ID}:spirit_medium_soul_speed")
     private val etherealStepCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
     private val spiritSightCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
+    private val spiritSightScanCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
 
     fun onLivingDamage(event: LivingDamageEvent.Pre) {
         val player = event.entity as? ServerPlayer ?: return
@@ -75,6 +76,8 @@ internal object SpiritMediumPerks {
         if (!player.isCrouching || RolePerks.jobPerks(player, "spirit_sight").isEmpty()) return
         val now = player.level().gameTime
         if (now < (spiritSightCooldownUntilTicks[player.uuid] ?: 0L)) return
+        if (now < (spiritSightScanCooldownUntilTicks[player.uuid] ?: 0L)) return
+        spiritSightScanCooldownUntilTicks[player.uuid] = now + SPIRIT_SIGHT_SCAN_INTERVAL_TICKS
         val level = player.level() as? ServerLevel ?: return
         val undead = level.getEntitiesOfClass(LivingEntity::class.java, player.boundingBox.inflate(SPIRIT_SIGHT_RADIUS)) { entity -> entity !== player && isUndead(entity) }
         if (undead.isEmpty()) return
@@ -115,6 +118,7 @@ internal object SpiritMediumPerks {
     private const val SPIRIT_SIGHT_RADIUS = 16.0
     private const val SPIRIT_SIGHT_DURATION_TICKS = 100
     private const val SPIRIT_SIGHT_COOLDOWN_TICKS = 600L
+    private const val SPIRIT_SIGHT_SCAN_INTERVAL_TICKS = 10L
     private const val GRAVE_WHISPER_CHANCE = 0.05
     private const val GRAVE_WHISPER_MIN = 10
     private const val GRAVE_WHISPER_MAX = 50

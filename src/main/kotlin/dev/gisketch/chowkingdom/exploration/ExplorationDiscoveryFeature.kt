@@ -14,6 +14,7 @@ import java.util.UUID
 
 object ExplorationDiscoveryFeature {
     private val lastScannedChunk: MutableMap<UUID, String> = linkedMapOf()
+    private val structureScanCooldownUntil: MutableMap<UUID, Long> = linkedMapOf()
 
     fun register() {
         NeoForge.EVENT_BUS.addListener(::onServerStarted)
@@ -23,6 +24,7 @@ object ExplorationDiscoveryFeature {
 
     private fun onServerStarted(event: ServerStartedEvent) {
         lastScannedChunk.clear()
+        structureScanCooldownUntil.clear()
         ExplorationDiscoveryStore.load(event.server)
     }
 
@@ -44,7 +46,10 @@ object ExplorationDiscoveryFeature {
         val dimension = level.dimension().location().toString()
         val scanKey = "$dimension|${chunk.x}|${chunk.z}"
         val sameChunk = lastScannedChunk[player.uuid] == scanKey
+        val now = level.gameTime
+        if (sameChunk && now < (structureScanCooldownUntil[player.uuid] ?: 0L)) return
         val hasStructureReferences = level.structureManager().hasAnyStructureAt(pos)
+        structureScanCooldownUntil[player.uuid] = now + STRUCTURE_RESCAN_INTERVAL_TICKS
         if (sameChunk && !hasStructureReferences) return
         if (!sameChunk) lastScannedChunk[player.uuid] = scanKey
 
@@ -81,4 +86,5 @@ object ExplorationDiscoveryFeature {
     private data class DiscoveredStructure(val id: String, val x: Int, val z: Int)
 
     private const val DISCOVERY_SCAN_INTERVAL_TICKS = 80
+    private const val STRUCTURE_RESCAN_INTERVAL_TICKS = 20L * 20L
 }

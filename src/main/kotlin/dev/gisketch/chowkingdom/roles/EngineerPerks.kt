@@ -18,6 +18,7 @@ import java.util.UUID
 internal object EngineerPerks {
     private val TECHNICIAN_REACH_MODIFIER = ResourceLocation.parse("${ChowKingdomMod.MOD_ID}:engineer_technician_reach")
     private val chargedMaintenanceCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
+    private val magnetScanCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
 
     fun onBreakSpeed(event: PlayerEvent.BreakSpeed) {
         val player = event.entity as? ServerPlayer ?: return
@@ -46,6 +47,9 @@ internal object EngineerPerks {
         val radius = RolePerks.configuredJobMaxBonusPercent(player, "magnet").coerceAtLeast(0.0)
         if (radius <= 0.0) return
         val level = player.level() as? ServerLevel ?: return
+        val now = level.gameTime
+        if (now < (magnetScanCooldownUntilTicks[player.uuid] ?: 0L)) return
+        magnetScanCooldownUntilTicks[player.uuid] = now + MAGNET_SCAN_INTERVAL_TICKS
         val center = player.position().add(0.0, 0.45, 0.0)
         val speed = (0.025 + 0.008 * JobLevels.jobLevel(player)).coerceAtMost(0.08)
         level.getEntitiesOfClass(ItemEntity::class.java, player.boundingBox.inflate(radius)).forEach { itemEntity ->
@@ -96,4 +100,5 @@ internal object EngineerPerks {
 
     private fun isEngineerTool(stack: ItemStack): Boolean = stack.`is`(ItemTags.PICKAXES) || stack.`is`(ItemTags.AXES) || stack.`is`(ItemTags.SHOVELS)
 
+    private const val MAGNET_SCAN_INTERVAL_TICKS = 2L
 }

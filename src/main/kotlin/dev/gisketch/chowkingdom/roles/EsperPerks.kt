@@ -13,6 +13,7 @@ internal object EsperPerks {
     private val focusMindState: MutableMap<UUID, FocusMindState> = linkedMapOf()
     private val focusMindCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
     private val premonitionCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
+    private val telekinesisScanCooldownUntilTicks: MutableMap<UUID, Long> = linkedMapOf()
 
     fun onLivingDamage(player: ServerPlayer, event: LivingDamageEvent.Pre) {
         if (!event.source.`is`(DamageTypeTags.IS_PROJECTILE)) return
@@ -30,6 +31,9 @@ internal object EsperPerks {
         val bonus = RolePerks.configuredJobMaxBonusPercent(player, "telekinesis_lite").coerceAtLeast(0.0)
         if (bonus <= 0.0) return
         val level = player.level() as? ServerLevel ?: return
+        val now = level.gameTime
+        if (now < (telekinesisScanCooldownUntilTicks[player.uuid] ?: 0L)) return
+        telekinesisScanCooldownUntilTicks[player.uuid] = now + TELEKINESIS_SCAN_INTERVAL_TICKS
         level.getEntitiesOfClass(ItemEntity::class.java, player.boundingBox.inflate(BASE_PICKUP_RANGE + bonus)).forEach { itemEntity ->
             if (itemEntity.hasPickUpDelay() || itemEntity.item.isEmpty || itemEntity.isRemoved) return@forEach
             itemEntity.playerTouch(player)
@@ -74,4 +78,5 @@ internal object EsperPerks {
     private const val FOCUS_MIND_COOLDOWN_TICKS = 600L
     private const val PREMONITION_DURATION_TICKS = 80
     private const val PREMONITION_COOLDOWN_TICKS = 1200L
+    private const val TELEKINESIS_SCAN_INTERVAL_TICKS = 2L
 }

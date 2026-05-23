@@ -59,6 +59,7 @@ object ReviveFeature {
     private const val LOCK_EFFECT_TICKS = 40
     private const val LOCKED_MOVE_TOLERANCE_SQR = 0.35 * 0.35
     private const val AI_TARGET_CLEAR_RADIUS = 96.0
+    private const val AI_TARGET_CLEAR_INTERVAL_TICKS = 5
     private const val DEFAULT_MAX_HEALTH = 20.0f
     private const val MAX_LETHAL_HEALTH_INPUT = 1024.0f
     private const val FINAL_DEATH_EXTRA_DAMAGE = 10000.0f
@@ -71,6 +72,7 @@ object ReviveFeature {
     private val pendingDebugRevivers: MutableList<PendingDebugReviver> = mutableListOf()
     private val finishingDeaths: MutableSet<UUID> = linkedSetOf()
     private var debugReviverSequence = 1
+    private var nextAiTargetClearTick = 0
 
     fun register(modBus: IEventBus) {
         ReviveConfig.load()
@@ -375,7 +377,10 @@ object ReviveFeature {
             val player = event.server.playerList.getPlayer(state.playerId) ?: return@forEach
             if (tick >= state.expiresAtTick) failRevive(player, state)
         }
-        clearAiTargets(event.server)
+        if (incapacitated.isNotEmpty() && tick >= nextAiTargetClearTick) {
+            nextAiTargetClearTick = tick + AI_TARGET_CLEAR_INTERVAL_TICKS
+            clearAiTargets(event.server)
+        }
         processPendingDebugRevivers(event.server, tick)
         reviveSessionsByReviver.values.toList().forEach { session ->
             val reviver = event.server.playerList.getPlayer(session.reviverId) ?: return@forEach cancelRevive(session, "Revive cancelled: reviver left.")
