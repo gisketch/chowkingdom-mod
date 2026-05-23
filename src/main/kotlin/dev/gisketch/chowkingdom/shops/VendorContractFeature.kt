@@ -73,6 +73,8 @@ class VendorContractItem(properties: Properties) : Item(properties) {
 
 object VendorContractFeature {
     private var tickCounter = 0
+    private var nextSellerDiscoveryTick = 0
+    private val knownSellerIdsByLevel: MutableMap<ResourceKey<net.minecraft.world.level.Level>, MutableSet<UUID>> = linkedMapOf()
 
     fun register(modBus: IEventBus) {
         VendorContractConfig.load()
@@ -196,6 +198,7 @@ object VendorContractFeature {
         seller.setNoAi(true)
         seller.setPersistenceRequired()
         seller.setDeltaMovement(Vec3.ZERO)
+        rememberSeller(seller)
         stack.shrink(1)
         player.displayClientMessage(Component.literal("Contract Signed"), true)
         openVendor(player, seller)
@@ -292,6 +295,7 @@ object VendorContractFeature {
         if (player.level() !== seller.level() || player.distanceToSqr(seller) > 64.0) return
         if (state.ownerId != player.uuid && !player.isCreative) return
         SellerData.clear(seller)
+        forgetSeller(seller)
         CobblemonVendorSupport.restoreVendorState(seller, state.previousCobblemonHideLabel, state.previousCobblemonUnbattleable, state.previousCobblemonShouldRenderName)
         seller.setNoAi(state.previousNoAi)
         val contract = contractStack(state.links)
@@ -376,19 +380,19 @@ object VendorContractFeature {
         val seller = event.entity as? Mob ?: return
         val state = SellerData.read(seller) ?: return
         SellerData.clear(seller)
+        forgetSeller(seller)
         CobblemonVendorSupport.restoreVendorState(seller, state.previousCobblemonHideLabel, state.previousCobblemonUnbattleable, state.previousCobblemonShouldRenderName)
         seller.spawnAtLocation(contractStack(state.links))
     }
 
     private fun onServerTick(event: ServerTickEvent.Post) {
+        if (event.server.tickCount >= nextSellerDiscoveryTick) {
+            discoverLoadedSellers(event.server)
+            nextSellerDiscoveryTick = event.server.tickCount + VENDOR_DISCOVERY_INTERVAL_TICKS
+        }
         tickCounter = (tickCounter + 1) % 10
         if (tickCounter != 0) return
-        event.server.allLevels.forEach { level ->
-            level.allEntities.forEach { entity ->
-                val mob = entity as? Mob ?: return@forEach
-                if (SellerData.isSeller(mob)) freezeSeller(mob)
-            }
-        }
+        loadedKnownSellers(event.server).forEach(::freezeSeller)
         event.server.playerList.players.forEach { player ->
             syncContractSelection(player)
             syncVendorSellers(player)
@@ -397,6 +401,7 @@ object VendorContractFeature {
 
     private fun freezeSeller(mob: Mob) {
         val state = SellerData.read(mob) ?: return
+        rememberSeller(mob)
         mob.setNoAi(true)
         CobblemonVendorSupport.applyVendorState(mob)
         mob.setDeltaMovement(Vec3.ZERO)
@@ -416,9 +421,12 @@ object VendorContractFeature {
     }
 
     private fun syncVendorSellers(player: ServerPlayer) {
-        val sellers = player.level().getEntitiesOfClass(Mob::class.java, player.boundingBox.inflate(128.0)) { SellerData.isSeller(it) }
+        val sellers = loadedKnownSellers(player.server)
+            .asSequence()
+            .filter { seller -> seller.level() == player.level() && seller.distanceToSqr(player) <= VENDOR_SYNC_RADIUS_SQR }
             .mapNotNull { seller -> SellerData.read(seller)?.let { VendorSellerName(seller.uuid, it.shopName) } }
             .take(256)
+            .toList()
         PacketDistributor.sendToPlayer(player, VendorSellerIdsPayload(sellers))
     }
 
@@ -431,8 +439,53 @@ object VendorContractFeature {
         return level.getBlockEntity(key.pos) as? ShopBlockEntity
     }
 
-    private fun findSeller(server: MinecraftServer, id: UUID): Entity? =
-        server.allLevels.asSequence().flatMap { level -> level.allEntities.asSequence() }.firstOrNull { it.uuid == id && SellerData.isSeller(it) }
+    private fun findSeller(server: MinecraftServer, id: UUID): Entity? {
+        loadedKnownSellers(server).firstOrNull { seller -> seller.uuid == id }?.let { return it }
+        return server.allLevels.asSequence()
+            .flatMap { level -> level.allEntities.asSequence() }
+            .firstOrNull { it.uuid == id && SellerData.isSeller(it) }
+            ?.also(::rememberSeller)
+    }
+
+    private fun loadedKnownSellers(server: MinecraftServer): List<Mob> {
+        val sellers = mutableListOf<Mob>()
+        val stale: MutableList<Pair<ResourceKey<net.minecraft.world.level.Level>, UUID>> = mutableListOf()
+        knownSellerIdsByLevel.forEach { (dimension, ids) ->
+            val level = server.getLevel(dimension)
+            if (level == null) {
+                ids.forEach { id -> stale += dimension to id }
+                return@forEach
+            }
+            ids.forEach { id ->
+                val seller = level.getEntity(id) as? Mob
+                if (seller != null && seller.isAlive && SellerData.isSeller(seller)) sellers += seller else stale += dimension to id
+            }
+        }
+        stale.forEach { (dimension, id) -> knownSellerIdsByLevel[dimension]?.remove(id) }
+        knownSellerIdsByLevel.entries.removeIf { (_, ids) -> ids.isEmpty() }
+        return sellers
+    }
+
+    private fun discoverLoadedSellers(server: MinecraftServer) {
+        val found: MutableMap<ResourceKey<net.minecraft.world.level.Level>, MutableSet<UUID>> = linkedMapOf()
+        server.allLevels.forEach { level ->
+            level.allEntities.forEach { entity ->
+                val mob = entity as? Mob ?: return@forEach
+                if (SellerData.isSeller(mob)) found.getOrPut(level.dimension()) { linkedSetOf() }.add(mob.uuid)
+            }
+        }
+        knownSellerIdsByLevel.clear()
+        knownSellerIdsByLevel.putAll(found)
+    }
+
+    private fun rememberSeller(entity: Entity) {
+        knownSellerIdsByLevel.getOrPut(entity.level().dimension()) { linkedSetOf() }.add(entity.uuid)
+    }
+
+    private fun forgetSeller(entity: Entity) {
+        knownSellerIdsByLevel[entity.level().dimension()]?.remove(entity.uuid)
+        knownSellerIdsByLevel.entries.removeIf { (_, ids) -> ids.isEmpty() }
+    }
 
     private fun dimensionKey(raw: String): ResourceKey<net.minecraft.world.level.Level> =
         ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(raw))
@@ -484,6 +537,9 @@ object VendorContractFeature {
         if (this > Long.MAX_VALUE - other) return Long.MAX_VALUE
         return this + other
     }
+
+    private const val VENDOR_DISCOVERY_INTERVAL_TICKS = 20 * 10
+    private const val VENDOR_SYNC_RADIUS_SQR = 128.0 * 128.0
 
     private data class PendingBuy(val key: ShopKey, val shop: ShopBlockEntity, val quantity: Int, val total: Long, val ownerId: UUID, val ownerName: String, val itemName: String)
 }

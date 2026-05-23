@@ -1373,6 +1373,30 @@ private class NpcDialogScreen(private val payload: NpcDialogPayload) : Screen(Co
                 skipPendingTalkResponse()
                 NpcNetwork.sendAction(payload.npcId, "league_choice:2")
             }
+            DialogAction.Sinnoh -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:3")
+            }
+            DialogAction.Unova -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:4")
+            }
+            DialogAction.Kalos -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:5")
+            }
+            DialogAction.Alola -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:6")
+            }
+            DialogAction.Galar -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:7")
+            }
+            DialogAction.Paldea -> if (isActionEnabled(action)) {
+                skipPendingTalkResponse()
+                NpcNetwork.sendAction(payload.npcId, "league_choice:8")
+            }
             DialogAction.Retire -> if (isActionEnabled(action)) {
                 skipPendingTalkResponse()
                 NpcNetwork.sendAction(payload.npcId, "league_retire")
@@ -1733,7 +1757,19 @@ private class NpcDialogScreen(private val payload: NpcDialogPayload) : Screen(Co
         questMode() -> listOf(DialogAction.Talk, DialogAction.Bye)
         bossClaimMode() -> listOf(DialogAction.Talk, DialogAction.Bye)
         bossContractMode() -> listOf(DialogAction.Talk, DialogAction.Claim, DialogAction.Bye)
-        leagueSelectMode() -> listOf(DialogAction.Kanto, DialogAction.Johto, DialogAction.Hoenn, DialogAction.Talk, DialogAction.Bye)
+        leagueSelectMode() -> listOf(
+            DialogAction.Kanto,
+            DialogAction.Johto,
+            DialogAction.Hoenn,
+            DialogAction.Sinnoh,
+            DialogAction.Unova,
+            DialogAction.Kalos,
+            DialogAction.Alola,
+            DialogAction.Galar,
+            DialogAction.Paldea,
+            DialogAction.Talk,
+            DialogAction.Bye,
+        )
         leagueRecordMode() -> listOfNotNull(DialogAction.Talk, DialogAction.Compass.takeIf { payload.leagueCompassAvailable }, DialogAction.Retire, DialogAction.Bye)
         leagueRetireMode() -> listOf(DialogAction.Confirm, DialogAction.Bye)
         leagueChowfanMode() -> listOf(DialogAction.Talk, DialogAction.League, DialogAction.Bye)
@@ -2265,9 +2301,15 @@ private enum class DialogAction(val label: String, val icon: ResourceLocation) {
     Work("WORK", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/shop.png")),
     League("LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
     Compass("REQUEST COMPASS", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
-    Kanto("GEN 1 KANTO", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
-    Johto("GEN 2 JOHTO", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
-    Hoenn("GEN 3 HOENN", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Kanto("KANTO LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Johto("JOHTO LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Hoenn("HOENN LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Sinnoh("SINNOH LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Unova("UNOVA LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Kalos("KALOS LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Alola("ALOLA LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Galar("GALAR LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
+    Paldea("PALDEA LEAGUE", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/trophy.png")),
     Retire("RETIRE RECORD", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/cancel.png")),
     Confirm("CONFIRM", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/accept.png")),
     Contracts("CONTRACTS", ResourceLocation.fromNamespaceAndPath(ChowKingdomMod.MOD_ID, "textures/gui/icons/quest_log.png")),

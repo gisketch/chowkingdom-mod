@@ -15,6 +15,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import dev.gisketch.chowkingdom.ChowKingdomMod
+import dev.gisketch.chowkingdom.config.TomlConfigIO
 import dev.gisketch.chowkingdom.gyms.GymBattleSpotState
 import dev.gisketch.chowkingdom.gyms.GymLeagueStore
 import dev.gisketch.chowkingdom.gyms.GymTransitionNetwork
@@ -40,7 +41,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.EnumSet
 import java.util.UUID
-import kotlin.io.path.bufferedReader
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
@@ -90,7 +90,7 @@ object NpcPokemonBattleService {
         }
     }
 
-    fun hasRoster(npcId: String): Boolean = rosterFile(npcId).exists() || defaultRosters.containsKey(cleanId(npcId))
+    fun hasRoster(npcId: String): Boolean = existingRosterFile(npcId) != null || defaultRosters.containsKey(cleanId(npcId))
 
     fun friendlyBattleAvailable(player: ServerPlayer, npc: ChowNpcEntity, definition: NpcDefinition): Boolean =
         hasRoster(definition.id) && NpcStore.workplacePos(definition.id) != null && !isBattleLocked(npc)
@@ -241,10 +241,9 @@ object NpcPokemonBattleService {
     }
 
     private fun sampledTrainerModel(definition: NpcDefinition, pending: PendingNpcBattleStart): TrainerModel? {
-        val file = rosterFile(definition.id)
-        if (!file.exists()) ensureDefaultRoster(definition.id, definition.displayName())
-        if (!file.exists()) return null
-        val root = file.bufferedReader().use { reader -> gson.fromJson(reader, JsonObject::class.java) } ?: return null
+        if (existingRosterFile(definition.id) == null) ensureDefaultRoster(definition.id, definition.displayName())
+        val file = existingRosterFile(definition.id) ?: return null
+        val root = TomlConfigIO.readObject(file) ?: return null
         val team = root.getAsJsonArray("team") ?: return null
         if (team.size() < 1) return null
         val seed = "${definition.id}:${pending.playerUuid}:${pending.executeAtTick}:${pending.quest}".hashCode()
@@ -571,6 +570,16 @@ object NpcPokemonBattleService {
     }
 
     private fun rosterFile(npcId: String): Path = rosterRoot().resolve("${cleanId(npcId)}.json")
+
+    private fun rosterTomlFile(npcId: String): Path = rosterRoot().resolve("${cleanId(npcId)}.toml")
+
+    private fun existingRosterFile(npcId: String): Path? {
+        val json = rosterFile(npcId)
+        if (json.exists()) return json
+        val toml = rosterTomlFile(npcId)
+        if (toml.exists()) return toml
+        return null
+    }
 
     private fun rosterRoot(): Path = FMLPaths.CONFIGDIR.get().resolve(ChowKingdomMod.MOD_ID).resolve("npc_battles").resolve("rosters")
 

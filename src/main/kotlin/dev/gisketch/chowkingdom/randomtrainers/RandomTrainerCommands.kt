@@ -29,6 +29,12 @@ object RandomTrainerCommands {
         .then(
             Commands.literal("randomtrainers")
                 .then(Commands.literal("stats").executes(::stats))
+                .then(
+                    Commands.literal("debug")
+                        .executes(::debug)
+                        .then(Commands.literal("on").executes { context -> setDebug(context, true) })
+                        .then(Commands.literal("off").executes { context -> setDebug(context, false) }),
+                )
                 .then(Commands.literal("validate").requires { it.hasPermission(2) }.executes(::validate))
                 .then(Commands.literal("reload").requires { it.hasPermission(2) }.executes(::reload))
                 .then(Commands.literal("extract").requires { it.hasPermission(2) }.executes(::extract))
@@ -66,6 +72,20 @@ object RandomTrainerCommands {
         val player = context.source.player
         RandomTrainerStore.status(player).forEach { line -> context.source.sendSuccess({ Component.literal(line) }, false) }
         return stats.trainerCount
+    }
+
+    private fun debug(context: CommandContext<CommandSourceStack>): Int {
+        val player = context.source.playerOrException
+        val lines = RandomTrainerSpawner.debugStatus(player)
+        lines.forEach { line -> context.source.sendSuccess({ Component.literal(line) }, false) }
+        return lines.size
+    }
+
+    private fun setDebug(context: CommandContext<CommandSourceStack>, enabled: Boolean): Int {
+        val player = context.source.playerOrException
+        val active = RandomTrainerSpawner.setLiveDebug(player, enabled)
+        context.source.sendSuccess({ Component.literal("Random trainer natural live debug ${if (active) "ON" else "OFF"}.") }, false)
+        return if (active) 1 else 0
     }
 
     private fun validate(context: CommandContext<CommandSourceStack>): Int {

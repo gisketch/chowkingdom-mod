@@ -12,6 +12,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.Entity.RemovalReason
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Mob
+import java.util.UUID
 import java.util.function.Consumer
 
 object NpcPokemonCompanions {
@@ -25,6 +26,8 @@ object NpcPokemonCompanions {
     private const val FOLLOW_START_DISTANCE_SQR = 4.5 * 4.5
     private const val FOLLOW_STOP_DISTANCE_SQR = 2.25 * 2.25
     private const val TELEPORT_DISTANCE_SQR = 36.0 * 36.0
+    private const val COMPANION_TICK_INTERVAL = 5
+    private const val COMPANION_CLEANUP_INTERVAL = 20 * 10
 
     private var eventsRegistered = false
     private val pokemonEntityClass: Class<*>? by lazy { runCatching { Class.forName(POKEMON_ENTITY_CLASS) }.getOrNull() }
@@ -42,6 +45,8 @@ object NpcPokemonCompanions {
     private val persistentStatusContainerClass: Class<*>? by lazy { runCatching { Class.forName("com.cobblemon.mod.common.pokemon.status.PersistentStatusContainer") }.getOrNull() }
     private val battleSuspendedNpcIds: MutableSet<String> = linkedSetOf()
     private val companionReleaseWindows: MutableMap<String, CompanionReleaseWindow> = linkedMapOf()
+    private val companionIdsByNpc: MutableMap<String, MutableSet<UUID>> = linkedMapOf()
+    private var nextCleanupTick = 0
 
     fun registerEvents() {
         if (eventsRegistered) return
@@ -58,22 +63,24 @@ object NpcPokemonCompanions {
 
     fun tick(server: MinecraftServer) {
         if (pokemonEntityClass == null || pokemonPropertiesClass == null) return
+        if (server.tickCount >= nextCleanupTick) {
+            cleanupLoadedCompanions(server)
+            nextCleanupTick = server.tickCount + COMPANION_CLEANUP_INTERVAL
+        }
+        if (server.tickCount % COMPANION_TICK_INTERVAL != 0) return
         NpcConfig.all().forEach { definition ->
-            if (definition.mainPokemon.isBlank()) {
-                removeForNpc(server, definition.id)
-                return@forEach
-            }
+            if (definition.mainPokemon.isBlank()) return@forEach
             val npc = NpcFeature.existingNpc(server, definition.id)
             if (npc == null || !npc.isAlive || NpcStore.isDead(definition.id)) {
-                removeForNpc(server, definition.id)
+                removeCachedForNpc(server, definition.id, discard = true)
                 return@forEach
             }
             if (cleanNpcId(definition.id) in battleSuspendedNpcIds) {
-                removeForNpc(server, definition.id)
+                removeCachedForNpc(server, definition.id, discard = true)
                 return@forEach
             }
             if (!shouldReleaseCompanion(npc, definition)) {
-                recallCompanions(server, definition.id)
+                recallCachedCompanions(server, definition.id)
                 return@forEach
             }
             tickNpcCompanion(npc, definition)
@@ -92,16 +99,31 @@ object NpcPokemonCompanions {
 
     fun removeForNpc(server: MinecraftServer, npcId: String) {
         companionReleaseWindows.remove(cleanNpcId(npcId))
-        companions(server, npcId).forEach { companion -> companion.discard() }
+        companions(server, npcId, discover = true).forEach { companion -> companion.discard() }
+        companionIdsByNpc.remove(cleanNpcId(npcId))
     }
 
     private fun recallCompanions(server: MinecraftServer, npcId: String) {
-        companions(server, npcId).forEach { companion -> recallWithEffects(companion) }
+        companions(server, npcId, discover = true).forEach { companion -> recallWithEffects(companion) }
+        companionIdsByNpc.remove(cleanNpcId(npcId))
+    }
+
+    private fun removeCachedForNpc(server: MinecraftServer, npcId: String, discard: Boolean) {
+        companionReleaseWindows.remove(cleanNpcId(npcId))
+        companions(server, npcId, discover = false).forEach { companion ->
+            if (discard) companion.discard() else recallWithEffects(companion)
+        }
+        companionIdsByNpc.remove(cleanNpcId(npcId))
+    }
+
+    private fun recallCachedCompanions(server: MinecraftServer, npcId: String) {
+        removeCachedForNpc(server, npcId, discard = false)
     }
 
     fun suspendForBattle(npcId: String, server: MinecraftServer) {
         battleSuspendedNpcIds.add(cleanNpcId(npcId))
-        companions(server, npcId).forEach { companion -> recallForBattle(companion) }
+        companions(server, npcId, discover = true).forEach { companion -> recallForBattle(companion) }
+        companionIdsByNpc.remove(cleanNpcId(npcId))
     }
 
     fun resumeAfterBattle(npcId: String) {
@@ -128,7 +150,7 @@ object NpcPokemonCompanions {
 
     private fun tickNpcCompanion(npc: ChowNpcEntity, definition: NpcDefinition) {
         val level = npc.level() as? ServerLevel ?: return
-        val companions = companions(level.server, definition.id)
+        val companions = companions(level.server, definition.id, discover = false)
         val matching = companions.filter { companion -> companion.persistentData.getCompound(COMPANION_TAG).getString(SPECIES_TAG) == definition.mainPokemon }
         val active = matching.firstOrNull { companion -> companion.level() == level && companion.isAlive } ?: spawn(level, npc, definition)
         companions.filter { companion -> companion != active }.forEach { companion -> companion.discard() }
@@ -151,6 +173,7 @@ object NpcPokemonCompanions {
             tagCompanion(entity, definition)
             applyCompanionState(entity, definition)
             level.addFreshEntity(entity)
+            rememberCompanion(entity, definition.id)
             releaseEffects(entity)
             entity
         }.onFailure { exception ->
@@ -337,12 +360,46 @@ object NpcPokemonCompanions {
         level.playSound(null, entity.x, entity.y, entity.z, SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.45f, 1.35f)
     }
 
-    private fun companions(server: MinecraftServer, npcId: String): List<Entity> =
-        server.allLevels.flatMap { level ->
+    private fun companions(server: MinecraftServer, npcId: String, discover: Boolean): List<Entity> {
+        val key = cleanNpcId(npcId)
+        val cached = companionIdsByNpc[key].orEmpty()
+            .mapNotNull { id -> server.allLevels.asSequence().mapNotNull { level -> level.getEntity(id) }.firstOrNull() }
+            .filter { entity -> entity.isAlive && isPokemonEntity(entity) && isCompanion(entity) && cleanNpcId(npcId(entity)) == key }
+        if (cached.isNotEmpty() || !discover) {
+            companionIdsByNpc[key] = cached.map { it.uuid }.toMutableSet()
+            return cached
+        }
+        val discovered = server.allLevels.flatMap { level ->
             level.allEntities.filter { entity ->
-                isPokemonEntity(entity) && isCompanion(entity) && npcId(entity) == npcId
+                isPokemonEntity(entity) && isCompanion(entity) && cleanNpcId(npcId(entity)) == key
             }
         }
+        companionIdsByNpc[key] = discovered.map { it.uuid }.toMutableSet()
+        return discovered
+    }
+
+    private fun cleanupLoadedCompanions(server: MinecraftServer) {
+        val configured = NpcConfig.all().associateBy { definition -> cleanNpcId(definition.id) }
+        val seen: MutableMap<String, MutableSet<UUID>> = linkedMapOf()
+        server.allLevels.forEach { level ->
+            level.allEntities.forEach { entity ->
+                if (!isPokemonEntity(entity) || !isCompanion(entity)) return@forEach
+                val key = cleanNpcId(npcId(entity))
+                val definition = configured[key]
+                if (definition == null || definition.mainPokemon.isBlank() || key in battleSuspendedNpcIds || NpcStore.isDead(definition.id)) {
+                    entity.discard()
+                    return@forEach
+                }
+                seen.getOrPut(key) { linkedSetOf() }.add(entity.uuid)
+            }
+        }
+        companionIdsByNpc.clear()
+        companionIdsByNpc.putAll(seen)
+    }
+
+    private fun rememberCompanion(entity: Entity, npcId: String) {
+        companionIdsByNpc.getOrPut(cleanNpcId(npcId)) { linkedSetOf() }.add(entity.uuid)
+    }
 
     private fun handleCaptureCalculated(event: Any) {
         val entity = runCatching { event.javaClass.getMethod("getPokemonEntity").invoke(event) as? Entity }.getOrNull() ?: return

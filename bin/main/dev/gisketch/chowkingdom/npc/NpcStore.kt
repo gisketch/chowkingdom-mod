@@ -53,8 +53,10 @@ object NpcStore {
 
     fun setEntity(npcId: String, entityId: UUID, campPos: BlockPos) {
         val state = state(npcId)
+        val camp = NpcBlockPosData.from(campPos)
+        if (state.entityUuid == entityId.toString() && state.camp?.let { it.x == camp.x && it.y == camp.y && it.z == camp.z } == true) return
         state.entityUuid = entityId.toString()
-        state.camp = NpcBlockPosData.from(campPos)
+        state.camp = camp
         save()
     }
 
@@ -458,6 +460,7 @@ object NpcStore {
 
     fun clearDead(npcId: String) {
         val state = state(npcId)
+        if (!state.dead && state.respawnDay == -1L) return
         state.dead = false
         state.respawnDay = -1L
         save()

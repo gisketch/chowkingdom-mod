@@ -13,8 +13,11 @@ import com.google.gson.JsonPrimitive
 import dev.gisketch.chowkingdom.ChowKingdomMod
 import net.neoforged.fml.loading.FMLPaths
 import java.nio.file.Files
+import java.nio.file.FileVisitResult
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.io.path.bufferedReader
@@ -32,13 +35,28 @@ object TomlConfigIO {
         val root = FMLPaths.CONFIGDIR.get().resolve(ChowKingdomMod.MOD_ID)
         if (!root.exists()) return
         val paths = mutableListOf<Path>()
-        Files.walk(root).use { stream ->
-            stream.forEach { path -> paths.add(path) }
-        }
+        Files.walkFileTree(
+            root,
+            object : SimpleFileVisitor<Path>() {
+                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    if (dir != root && isConfigBackupDirectory(dir)) return FileVisitResult.SKIP_SUBTREE
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                    paths.add(file)
+                    return FileVisitResult.CONTINUE
+                }
+
+                override fun visitFileFailed(file: Path, exc: java.io.IOException): FileVisitResult {
+                    ChowKingdomMod.LOGGER.warn("Skipping unreadable config path during migration: {}", file, exc)
+                    return FileVisitResult.CONTINUE
+                }
+            },
+        )
         paths.asSequence()
             .filter { path -> Files.isRegularFile(path) }
             .filter { path -> path.extension.equals("json", ignoreCase = true) }
-            .filterNot { path -> path.startsWith(root.resolve(BACKUP_DIR)) }
             .sortedByDescending { path -> path.toString() }
             .forEach { jsonPath ->
                 val tomlPath = jsonPath.parent.resolve("${jsonPath.nameWithoutExtension}.toml")
@@ -104,6 +122,11 @@ object TomlConfigIO {
         if (!path.exists()) return path
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
         return path.parent.resolve("${path.nameWithoutExtension}-$timestamp.${path.extension}")
+    }
+
+    private fun isConfigBackupDirectory(path: Path): Boolean {
+        val name = path.fileName?.toString() ?: return false
+        return name == BACKUP_DIR || name.startsWith("catalog_backup_")
     }
 
     private fun readElement(path: Path): JsonElement {

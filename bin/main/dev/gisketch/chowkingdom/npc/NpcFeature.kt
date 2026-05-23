@@ -2022,16 +2022,29 @@ object NpcFeature {
         val targetY = target.y.toDouble()
         val targetZ = target.z + 0.5
         if (npc.distanceToSqr(targetX, targetY, targetZ) <= NPC_AMBIENT_REACH_DISTANCE_SQR) {
+            if (action.arrivedAtTick == 0L) {
+                action.arrivedAtTick = level.gameTime
+                action.untilTick = minOf(action.untilTick, level.gameTime + ambientArrivalDwellTicks(level))
+                rememberAmbientAction(level, npc, action)
+            }
             npc.navigation.stop()
             npc.lookControl.setLookAt(targetX, targetY + 1.0, targetZ, 30.0f, 30.0f)
             playAmbientActionEmote(npc, action)
             return
         }
-        if (npc.navigation.isDone || npc.tickCount % NPC_AMBIENT_REPATH_TICKS == 0) {
+        if (npc.navigation.isDone || level.gameTime >= action.nextRepathTick) {
             npc.navigation.moveTo(targetX, targetY, targetZ, NPC_AMBIENT_SPEED)
+            action.nextRepathTick = level.gameTime + ambientRepathDelay(level)
         }
         if (level.gameTime % 40L == 0L) rememberAmbientAction(level, npc, action)
     }
+
+    private fun ambientArrivalDwellTicks(level: ServerLevel): Long =
+        NPC_AMBIENT_ARRIVAL_DWELL_MIN_TICKS + level.random.nextInt((NPC_AMBIENT_ARRIVAL_DWELL_MAX_TICKS - NPC_AMBIENT_ARRIVAL_DWELL_MIN_TICKS + 1).toInt())
+
+    private fun ambientRepathDelay(level: ServerLevel): Long =
+        NPC_AMBIENT_REPATH_MIN_TICKS + level.random.nextInt((NPC_AMBIENT_REPATH_MAX_TICKS - NPC_AMBIENT_REPATH_MIN_TICKS + 1).toInt())
+
 
     private fun playAmbientActionEmote(npc: ChowNpcEntity, action: ActiveNpcAmbientAction) {
         if (action.emotePlayed || action.emote.isBlank()) return
@@ -2061,12 +2074,13 @@ object NpcFeature {
         val durationTicks = NPC_AMBIENT_MIN_TICKS + level.random.nextInt((NPC_AMBIENT_MAX_TICKS - NPC_AMBIENT_MIN_TICKS + 1).toInt())
         val untilTick = level.gameTime + durationTicks
         selectAmbientEmoteOnly(level, npc, activity, untilTick)?.let { action -> return action.withMoment(moment, definition) }
+        val movementUntilTick = level.gameTime + NPC_AMBIENT_TRAVEL_MIN_TICKS + level.random.nextInt((NPC_AMBIENT_TRAVEL_MAX_TICKS - NPC_AMBIENT_TRAVEL_MIN_TICKS + 1).toInt())
         val action = when (activity) {
-            "pokemon_roam" -> pokemonAmbientAction(level, npc, definition, activity, untilTick)
-            NpcScheduleDefinition.MEETUP_ACTIVITY -> plazaAmbientAction(npc, activity, untilTick)
-            "home" -> homeAmbientAction(npc, definition, activity, untilTick)
-            "work" -> workAmbientAction(level, npc, definition, activity, untilTick)
-            else -> roamAmbientAction(npc, definition, activity, untilTick)
+            "pokemon_roam" -> pokemonAmbientAction(level, npc, definition, activity, movementUntilTick)
+            NpcScheduleDefinition.MEETUP_ACTIVITY -> plazaAmbientAction(npc, activity, movementUntilTick)
+            "home" -> homeAmbientAction(npc, definition, activity, movementUntilTick)
+            "work" -> workAmbientAction(level, npc, definition, activity, movementUntilTick)
+            else -> roamAmbientAction(npc, definition, activity, movementUntilTick)
         } ?: return null
         return action.withMoment(moment, definition).withAutoAmbientEmote(level)
     }
@@ -2356,20 +2370,17 @@ object NpcFeature {
 
     private fun randomPlazaTarget(entity: ChowNpcEntity): BlockPos? {
         val center = plazaMeetupTarget() ?: return null
-        val level = entity.level()
         val radius = plazaMeetupRadius()
-        repeat(12) {
-            val candidate = center.offset(level.random.nextInt(radius * 2 + 1) - radius, 0, level.random.nextInt(radius * 2 + 1) - radius)
-            listOf(candidate, candidate.above(), candidate.below()).firstOrNull { pos ->
-                level.getBlockState(pos.below()).isSolidRender(level, pos.below()) && level.getBlockState(pos).isAir && level.getBlockState(pos.above()).isAir
-            }?.let { return it }
-        }
-        return center
+        return randomRoamTargetNear(entity, center, radius, minimumTownTravelDistance(radius)) ?: randomRoamTargetNear(entity, center, radius) ?: center
     }
 
     private fun plazaMeetupTarget(): BlockPos? = NpcStore.townCenterPos() ?: NpcStore.campBlockPos()
 
     private fun plazaMeetupRadius(): Int = if (NpcStore.townCenterPos() != null) NpcStore.townCenterRadius() else NPC_PLAZA_CAMP_FALLBACK_RADIUS
+
+    private fun townActivityRadius(): Int = (NpcStore.townCenterPos()?.let { NpcStore.townCenterRadius() } ?: NPC_TOWN_ACTIVITY_FALLBACK_RADIUS).coerceIn(8, 64)
+
+    private fun minimumTownTravelDistance(radius: Int): Int = (radius / 2).coerceIn(8, 24)
 
     private fun onServerStarted(event: ServerStartedEvent) {
         NpcConfig.load()
@@ -4194,18 +4205,22 @@ object NpcFeature {
     }
 
     private fun randomRoamTarget(entity: ChowNpcEntity, definition: NpcDefinition): BlockPos? {
-        val base = entity.homePos ?: entity.campPos ?: entity.blockPosition()
-        return randomRoamTargetNear(entity, base, definition.jobDefinition.roamRadius)
+        val base = entity.homePos ?: entity.campPos ?: plazaMeetupTarget() ?: entity.blockPosition()
+        val radius = max(definition.jobDefinition.roamRadius, townActivityRadius())
+        return randomRoamTargetNear(entity, base, radius, minimumTownTravelDistance(radius))
+            ?: randomRoamTargetNear(entity, base, radius)
     }
 
-    private fun randomRoamTargetNear(entity: ChowNpcEntity, base: BlockPos, radius: Int): BlockPos? {
+    private fun randomRoamTargetNear(entity: ChowNpcEntity, base: BlockPos, radius: Int, minTravelDistance: Int = 0): BlockPos? {
         val random = entity.random
         val clampedRadius = radius.coerceIn(1, 64)
-        repeat(16) {
+        val minDistanceSqr = minTravelDistance.toDouble() * minTravelDistance.toDouble()
+        repeat(32) {
             val x = base.x + random.nextInt(clampedRadius * 2 + 1) - clampedRadius
             val z = base.z + random.nextInt(clampedRadius * 2 + 1) - clampedRadius
             val y = entity.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPos(x, base.y, z)).y
             val pos = BlockPos(x, y, z)
+            if (minTravelDistance > 0 && entity.distanceToSqr(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5) < minDistanceSqr) return@repeat
             if (entity.navigation.createPath(pos, 0) != null) return pos
         }
         return null
@@ -4259,23 +4274,9 @@ object NpcFeature {
     }
 
     private fun randomWorkplaceTarget(entity: ChowNpcEntity, center: BlockPos): BlockPos? {
-        val random = entity.random
-        repeat(16) {
-            val x = center.x + random.nextInt(WORKPLACE_ROAM_RADIUS * 2 + 1) - WORKPLACE_ROAM_RADIUS
-            val z = center.z + random.nextInt(WORKPLACE_ROAM_RADIUS * 2 + 1) - WORKPLACE_ROAM_RADIUS
-            val base = BlockPos(x, center.y, z)
-            val localTarget = (-2..2).asSequence()
-                .map { offset -> base.offset(0, offset, 0) }
-                .firstOrNull { pos -> entity.navigation.createPath(pos, 0) != null }
-            if (localTarget != null) return localTarget
-        }
-        repeat(8) {
-            val x = center.x + random.nextInt(WORKPLACE_ROAM_RADIUS * 2 + 1) - WORKPLACE_ROAM_RADIUS
-            val z = center.z + random.nextInt(WORKPLACE_ROAM_RADIUS * 2 + 1) - WORKPLACE_ROAM_RADIUS
-            val surface = entity.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPos(x, center.y, z))
-            if (entity.navigation.createPath(surface, 0) != null) return surface
-        }
-        return null
+        val radius = townActivityRadius()
+        return randomRoamTargetNear(entity, center, radius, minimumTownTravelDistance(radius))
+            ?: randomRoamTargetNear(entity, center, radius)
     }
 
     private data class NpcLookHit(val npc: ChowNpcEntity, val along: Double, val distanceSqr: Double)
@@ -4333,11 +4334,13 @@ object NpcFeature {
         val targetLabel: String,
         val targetPos: BlockPos?,
         val lookPos: Vec3?,
-        val untilTick: Long,
+        var untilTick: Long,
         val line: String = "",
         val soloMomentId: String = "",
         val emote: String = "",
         val emoteSurface: String = NpcEmoteSurfaces.AMBIENT,
+        var arrivedAtTick: Long = 0L,
+        var nextRepathTick: Long = 0L,
         var emotePlayed: Boolean = false,
         val shownToPlayers: MutableSet<UUID> = linkedSetOf(),
     )
@@ -4380,10 +4383,15 @@ object NpcFeature {
     private const val NPC_AUTO_TASK_COOLDOWN_MAX_TICKS = 300L
     private const val NPC_AMBIENT_MIN_TICKS = 80L
     private const val NPC_AMBIENT_MAX_TICKS = 220L
+    private const val NPC_AMBIENT_TRAVEL_MIN_TICKS = 500L
+    private const val NPC_AMBIENT_TRAVEL_MAX_TICKS = 900L
     private const val NPC_AMBIENT_COOLDOWN_MIN_TICKS = 60L
     private const val NPC_AMBIENT_COOLDOWN_MAX_TICKS = 140L
     private const val NPC_AMBIENT_MEMORY_TICKS = 20L * 45L
-    private const val NPC_AMBIENT_REPATH_TICKS = 40
+    private const val NPC_AMBIENT_REPATH_MIN_TICKS = 20L
+    private const val NPC_AMBIENT_REPATH_MAX_TICKS = 45L
+    private const val NPC_AMBIENT_ARRIVAL_DWELL_MIN_TICKS = 25L
+    private const val NPC_AMBIENT_ARRIVAL_DWELL_MAX_TICKS = 70L
     private const val NPC_AMBIENT_REACH_DISTANCE_SQR = 2.25 * 2.25
     private const val NPC_AMBIENT_SPEED = 0.75
     private const val NPC_AMBIENT_BALLOON_TICKS = 100
@@ -4397,6 +4405,7 @@ object NpcFeature {
     private const val NPC_DEFAULT_MEETUP_START_HOUR = 15
     private const val NPC_DEFAULT_MEETUP_END_HOUR = 20
     private const val NPC_PLAZA_CAMP_FALLBACK_RADIUS = 10
+    private const val NPC_TOWN_ACTIVITY_FALLBACK_RADIUS = 32
     private const val TRAINER_POKEMON_SCAN_RADIUS = 10.0
     private const val TRAINER_MEETUP_SCAN_RADIUS = 12.0
     private val TRAINER_POKEMON_BALLOONS = listOf(
@@ -4411,7 +4420,6 @@ object NpcFeature {
     )
     private const val CONTRACT_BED_ASSIGN_RADIUS_SQR = 7.0 * 7.0
     private const val WORKPLACE_ASSIGN_RADIUS_SQR = 8.0 * 8.0
-    private const val WORKPLACE_ROAM_RADIUS = 8
     private const val NPC_CAMPER_HOUSING_BALLOON_TICKS = 120
     private const val NPC_CAMPER_HOUSING_BALLOON_REFRESH_TICKS = 80L
     private const val NPC_FRIENDSHIP_DELTA_BALLOON_TICKS = 50

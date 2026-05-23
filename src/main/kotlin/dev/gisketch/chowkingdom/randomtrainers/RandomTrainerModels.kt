@@ -11,6 +11,8 @@ class RandomTrainerSettings(
     var globalSpawnChance: Double = 0.85,
     var spawnIntervalTicks: Int = 100,
     var spawnIntervalTicksMaximum: Int = 1200,
+    var debugNaturalSpawning: Boolean = false,
+    var debugStatusIntervalTicks: Int = 200,
     var despawnTicksIfUnseen: Int = 6000,
     var minHorizontalDistanceToPlayers: Int = 12,
     var maxHorizontalDistanceToPlayers: Int = 36,

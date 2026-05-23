@@ -48,6 +48,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent
 
 object GymLeagueFeature {
     private const val DEFAULT_STADIUM_AREA = "main_stadium"
+    private const val TRAINER_RECONCILE_INTERVAL_TICKS = 20L * 30L
     private var nextSpawnTick = 0L
     private var nextAvailabilityTick = 0L
     private var nextTrainerReconcileTick = 0L
@@ -266,7 +267,7 @@ object GymLeagueFeature {
             server.playerList.players.forEach { player -> checkChallengeAvailability(player) }
         }
         if (now >= nextTrainerReconcileTick || pendingTrainerReconcile.isNotEmpty()) {
-            nextTrainerReconcileTick = now + 20L
+            nextTrainerReconcileTick = now + TRAINER_RECONCILE_INTERVAL_TICKS
             reconcilePendingGymTrainers(server)
         }
         if (now < nextSpawnTick) return
@@ -414,7 +415,6 @@ object GymLeagueFeature {
         if (NpcStore.activeCamperId() == npcId) NpcStore.clearActiveCamper(npcId)
         GymLeagueStore.clearTrainerRespawn(npcId)
         NpcConfig.get(npcId)?.let { definition ->
-            NpcPokemonCompanions.removeForNpc(server, npcId)
             NpcPokemonCompanions.ensureFor(kept, definition)
         }
         if (live.size > 1) ChowKingdomMod.LOGGER.info("Reconciled gym trainer {}: kept {}, removed {}", npcId, kept.uuid, live.size - 1)

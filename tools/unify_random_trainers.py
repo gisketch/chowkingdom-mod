@@ -257,6 +257,13 @@ def clean_id(value: Any) -> str:
     return text.strip("_.-")
 
 
+def clean_asset_filename(value: str) -> str:
+    path = Path(value)
+    stem = re.sub(r"[^a-z0-9_.-]+", "_", path.stem.strip().lower()).strip("_.-")
+    suffix = re.sub(r"[^a-z0-9.]+", "", path.suffix.strip().lower())
+    return f"{stem or 'skin'}{suffix or '.png'}"
+
+
 def long_path(path: Path) -> str:
     raw = str(path.resolve())
     if os.name == "nt" and not raw.startswith("\\\\?\\"):
@@ -784,7 +791,7 @@ def canonical_skin_target(relative: Path) -> Path:
     title_id = clean_id(title)
     if inferred_gender not in {"male", "female"}:
         inferred_gender = ANY_SKIN_GENDER_OVERRIDES.get(title_id) or ("female" if title_id in FEMALE_TITLE_IDS else "male")
-    return Path(title_id) / gender_folder(inferred_gender) / relative.name
+    return Path(title_id) / gender_folder(inferred_gender) / clean_asset_filename(relative.name)
 
 
 def unique_destination(path: Path) -> Path:
@@ -808,8 +815,9 @@ def unify_skins(root: Path, dry_run: bool) -> dict[str, int]:
     for src in pngs:
         stats["png"] += 1
         relative = src.relative_to(root)
-        wanted = root / canonical_skin_target(relative)
-        if src.resolve() == wanted.resolve():
+        target_relative = canonical_skin_target(relative)
+        wanted = root / target_relative
+        if relative.as_posix() == target_relative.as_posix():
             continue
         dest = unique_destination(wanted)
         stats["moved"] += 1

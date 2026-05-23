@@ -95,7 +95,7 @@ def copy_png(src: Path, target_folder: str, copied_hashes: set[str]) -> tuple[st
         if digest(existing) == src_digest:
             copied_hashes.add(src_digest)
             return existing.relative_to(unify.DEFAULT_SKINS).as_posix(), True
-    dest, already = unique_dest(dest_dir / src.name, src)
+    dest, already = unique_dest(dest_dir / unify.clean_asset_filename(src.name), src)
     if not already:
         shutil.copy2(src, dest)
     copied_hashes.add(src_digest)

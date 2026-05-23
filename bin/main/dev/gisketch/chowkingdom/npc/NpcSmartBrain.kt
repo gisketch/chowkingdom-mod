@@ -87,15 +87,43 @@ private class NpcFeatureTask(
 
 private object NpcRoutineTask : NpcSmartBrainTask {
     override val id: String = "routine"
+    private val nextScanTick: MutableMap<UUID, Long> = linkedMapOf()
+    private val lastActivity: MutableMap<UUID, String> = linkedMapOf()
 
     override fun run(entity: ChowNpcEntity): Boolean {
         val definition = NpcFeature.smartBrainDefinition(entity) ?: return false
         val activity = NpcFeature.activityFor(entity, definition)
+        val now = entity.level().gameTime
+        val previousActivity = lastActivity.put(entity.uuid, activity)
+        val activityChanged = previousActivity != null && previousActivity != activity
         entity.debugActivity = activity
         if (activity != "sleep" && entity.isSleeping) entity.stopSleeping()
-        if (entity.tickCount % definition.jobDefinition.scanIntervalTicks != 0 || !entity.navigation.isDone) return true
+        if (activityChanged) {
+            entity.navigation.stop()
+            nextScanTick[entity.uuid] = now + initialDelay(entity, definition.jobDefinition.scanIntervalTicks)
+            return true
+        }
+        if (!entity.navigation.isDone) return true
+        val next = nextScanTick[entity.uuid]
+        if (next == null) {
+            nextScanTick[entity.uuid] = now + initialDelay(entity, definition.jobDefinition.scanIntervalTicks)
+            return true
+        }
+        if (now < next) return true
         NpcFeature.moveToActivityTarget(entity, definition, activity)
+        nextScanTick[entity.uuid] = now + routineDelay(entity, definition.jobDefinition.scanIntervalTicks)
         return true
+    }
+
+    private fun initialDelay(entity: ChowNpcEntity, scanIntervalTicks: Int): Long {
+        val interval = scanIntervalTicks.coerceAtLeast(10)
+        return entity.random.nextInt(interval + 1).toLong()
+    }
+
+    private fun routineDelay(entity: ChowNpcEntity, scanIntervalTicks: Int): Long {
+        val interval = scanIntervalTicks.coerceAtLeast(10)
+        val minimum = (interval / 2).coerceAtLeast(10)
+        return minimum + entity.random.nextInt(interval + 1).toLong()
     }
 }
 
