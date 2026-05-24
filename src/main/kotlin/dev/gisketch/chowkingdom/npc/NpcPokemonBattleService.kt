@@ -18,6 +18,7 @@ import dev.gisketch.chowkingdom.ChowKingdomMod
 import dev.gisketch.chowkingdom.config.TomlConfigIO
 import dev.gisketch.chowkingdom.gyms.GymBattleSpotState
 import dev.gisketch.chowkingdom.gyms.GymLeagueStore
+import dev.gisketch.chowkingdom.gyms.StadiumBattlePokemonPlacement
 import dev.gisketch.chowkingdom.gyms.GymTransitionNetwork
 import dev.gisketch.chowkingdom.snackbar.SnackbarIcons
 import dev.gisketch.chowkingdom.snackbar.SnackbarNetwork
@@ -51,6 +52,7 @@ object NpcPokemonBattleService {
     private const val API_ID = ChowKingdomMod.MOD_ID
     private const val STADIUM_ID = "main_stadium"
     private const val BATTLE_FADE_TELEPORT_DELAY_TICKS = 8L
+    private const val BATTLE_FACE_SYNC_TICKS = 40L
     private var api: RCTApi? = null
     private var gson: Gson = GsonBuilder().setPrettyPrinting().create()
     private var registered = false
@@ -84,6 +86,7 @@ object NpcPokemonBattleService {
                 instance.eventContext.register(Events.BATTLE_ENDED, battleEndedListener)
                 listenerRegistered = true
             }
+            StadiumBattlePokemonPlacement.register()
             server.playerList.players.forEach(::registerPlayer)
         }.onFailure { exception ->
             ChowKingdomMod.LOGGER.warn("Failed to initialize resident NPC Pokemon battle API", exception)
@@ -105,8 +108,7 @@ object NpcPokemonBattleService {
 
     fun tickBattleLock(npc: ChowNpcEntity): Boolean {
         val lock = battleLocksByNpcUuid[npc.uuid] ?: battleLocksByNpcId[npc.npcId] ?: return false
-        npc.navigation.stop()
-        npc.target = null
+        holdNpcAtBattleAnchor(npc, lock)
         npc.debugActivity = "npc_pokemon_battle"
         npc.debugGoal = if (lock.quest) "quest_battle" else "friendly_battle"
         val level = npc.level() as? net.minecraft.server.level.ServerLevel
@@ -280,7 +282,8 @@ object NpcPokemonBattleService {
             npc.moveTo(trainerPos.x, trainerPos.y, trainerPos.z, trainerYaw, 0.0f)
         }
         forceFaceEachOther(player, npc)
-        pendingFacing += PendingFacingSync(player.server.overworld().gameTime + 20L, player.uuid, npc.uuid)
+        StadiumBattlePokemonPlacement.queue(player, npc, playerPos, trainerPos)
+        pendingFacing += PendingFacingSync(player.server.overworld().gameTime + BATTLE_FACE_SYNC_TICKS, player.uuid, npc.uuid)
         return null
     }
 
@@ -393,10 +396,34 @@ object NpcPokemonBattleService {
     }
 
     private fun lockNpcForBattle(npc: ChowNpcEntity, player: ServerPlayer, quest: Boolean) {
-        val lock = ActiveNpcPokemonBattleLock(npc.npcId, npc.uuid, player.uuid, quest)
+        val anchor = npc.position()
+        val lock = ActiveNpcPokemonBattleLock(
+            npcId = npc.npcId,
+            npcUuid = npc.uuid,
+            playerUuid = player.uuid,
+            quest = quest,
+            anchorDimension = npc.level().dimension().location().toString(),
+            anchorX = anchor.x,
+            anchorY = anchor.y,
+            anchorZ = anchor.z,
+            anchorYaw = npc.yRot,
+        )
         battleLocksByNpcId[npc.npcId] = lock
         battleLocksByNpcUuid[npc.uuid] = lock
         npc.navigation.stop()
+    }
+
+    private fun holdNpcAtBattleAnchor(npc: ChowNpcEntity, lock: ActiveNpcPokemonBattleLock) {
+        npc.navigation.stop()
+        npc.target = null
+        npc.deltaMovement = Vec3.ZERO
+        if (npc.level().dimension().location().toString() != lock.anchorDimension) return
+        val dx = npc.x - lock.anchorX
+        val dy = npc.y - lock.anchorY
+        val dz = npc.z - lock.anchorZ
+        if (dx * dx + dy * dy + dz * dz > BATTLE_NPC_ANCHOR_TOLERANCE_SQR) {
+            npc.moveTo(lock.anchorX, lock.anchorY, lock.anchorZ, lock.anchorYaw, 0.0f)
+        }
     }
 
     private fun unlockNpcForBattle(npcId: String, npcUuid: UUID?) {
@@ -642,6 +669,11 @@ private data class ActiveNpcPokemonBattleLock(
     val npcUuid: UUID,
     val playerUuid: UUID?,
     val quest: Boolean,
+    val anchorDimension: String,
+    val anchorX: Double,
+    val anchorY: Double,
+    val anchorZ: Double,
+    val anchorYaw: Float,
 )
 
 private data class PendingFacingSync(
@@ -659,3 +691,5 @@ private data class NpcPokemonSnapshot(
     val currentHealth: Double?,
     val status: Any?,
 )
+
+private const val BATTLE_NPC_ANCHOR_TOLERANCE_SQR = 0.08 * 0.08

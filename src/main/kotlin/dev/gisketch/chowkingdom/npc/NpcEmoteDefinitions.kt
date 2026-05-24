@@ -27,12 +27,14 @@ object NpcEmoteSurfaces {
     fun isValid(value: String): Boolean = normalize(value) in valid
 }
 
+private val REMOVED_NPC_EMOTE_IDS = setOf("proud", "lookout")
+
 class NpcEmoteCatalogDefinition(
     var emotes: MutableList<NpcEmoteDefinition> = mutableListOf(),
 ) {
     fun normalized(defaults: List<NpcEmoteDefinition> = NpcEmoteDefaults.entries()): NpcEmoteCatalogDefinition = apply {
         emotes = emotes.map { emote -> emote.normalized() }
-            .filter { emote -> emote.id.isNotBlank() && emote.animationId.isNotBlank() && emote.enabled }
+            .filter { emote -> emote.id.isNotBlank() && emote.animationId.isNotBlank() && emote.enabled && emote.id !in REMOVED_NPC_EMOTE_IDS }
             .distinctBy { emote -> emote.id }
             .toMutableList()
         if (emotes.isEmpty()) emotes = defaults.map { emote -> emote.copyDefinition() }.toMutableList()
@@ -105,8 +107,6 @@ object NpcEmoteDefaults {
         emote("clap", "emotecraft:clap", "approval or celebration", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO, NpcEmoteSurfaces.AMBIENT, NpcEmoteSurfaces.POKEMON), listOf("happy", "approval", "celebrate", "pokemon"), 65, 70, 100),
         emote("facepalm", "emotecraft:facepalm", "frustration or disbelief", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO), listOf("frustrated", "confused", "disbelief"), 35, 70, 140),
         emote("shrug", "emotecraft:shrug", "uncertain or neutral reaction", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO, NpcEmoteSurfaces.AMBIENT, NpcEmoteSurfaces.POKEMON), listOf("uncertain", "neutral", "confused"), 55, 60, 90),
-        emote("proud", "emotecraft:proud", "confidence or victory", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO, NpcEmoteSurfaces.AMBIENT, NpcEmoteSurfaces.POKEMON), listOf("proud", "confident", "victory", "quest", "class"), 50, 80, 120),
-        emote("lookout", "emotecraft:lookout", "watching or scanning nearby things", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO, NpcEmoteSurfaces.AMBIENT, NpcEmoteSurfaces.POKEMON), listOf("watch", "observe", "pokemon", "search"), 60, 80, 100),
         emote("time_check", "emotecraft:time-check", "waiting, work, or schedule awareness", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.AMBIENT), listOf("waiting", "work", "schedule"), 40, 70, 120),
         emote("speaking", "emotecraft:speaking", "talking, explaining, or answering", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO), listOf("talk", "speak", "explain", "answer", "neutral"), 85, 70, 0, loopWhileTalking = true),
         emote("head_scratches", "emotecraft:head_scratches", "thinking, awkwardness, or uncertainty", listOf(NpcEmoteSurfaces.CONVERSATION, NpcEmoteSurfaces.WORLD_CHAT, NpcEmoteSurfaces.MICRO, NpcEmoteSurfaces.AMBIENT, NpcEmoteSurfaces.POKEMON), listOf("thinking", "confused", "uncertain", "awkward"), 50, 80, 110),
