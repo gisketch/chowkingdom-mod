@@ -51,14 +51,10 @@ Codex reads this file first. Keep it short. It is the map, not the manual.
 <!-- sonata:block=integrations:start -->
 ## Sonata Integrations
 
-- Pi is enabled. Project skills live in `.pi/skills/`; prompt templates live in `.pi/prompts/`. For Serena in Pi, install `pi-serena-tools` only after reviewing the package.
-- Daily coding stack: use Serena for symbol-aware navigation/refactors and lean-ctx for compressed file reads, searches, and shell output.
-- Serena: prefer semantic tools for code structure work: symbol overview, find symbol, find references, and symbol-level edits. Use for non-trivial code navigation and refactors.
-- Do not use Serena for tiny text-only edits, docs-only changes, exact log inspection, or when no MCP/Pi Serena tools are available; fall back and mention why.
-- See [docs/context/serena.md](docs/context/serena.md).
-- LeanCTX: prefer `lean-ctx read`, `lean-ctx grep`, `lean-ctx ls`, and `lean-ctx -c` for codebase context, searches, and noisy shell commands. Use `-m full` for files you will edit, unless Serena gives a more precise symbol-level path.
-- Use raw/native output only for exact logs, interactive commands, unsupported cases, or when lean-ctx is unavailable; mention the reason in handoff.
-- See [docs/context/lean-ctx.md](docs/context/lean-ctx.md).
+- If running in Pi Agent, use project extensions `rtk` and `cymbal` for repo-local context, searches, reads, and shell/output compression.
+- Project skills live in `.pi/skills/`; prompt templates live in `.pi/prompts/`.
+- Prefer `rtk`/`cymbal` over raw/native tools when they provide the needed context cheaper or clearer.
+- Use raw/native tools for exact logs, unsupported cases, or when `rtk`/`cymbal` are unavailable; mention the fallback in handoff.
 <!-- sonata:block=integrations:end -->
 
 ## graphify
@@ -74,9 +70,3 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - NEVER RUN graphify update . !! it takes a lot of time, just say to the user, he can run graphify update if needed
 
-<!-- lean-ctx -->
-## lean-ctx
-
-Prefer lean-ctx MCP tools over native equivalents for token savings.
-Full rules: @LEAN-CTX.md
-<!-- /lean-ctx -->

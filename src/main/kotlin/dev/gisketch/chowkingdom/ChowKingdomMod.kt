@@ -63,6 +63,7 @@ import dev.gisketch.chowkingdom.trading.TradingClient
 import dev.gisketch.chowkingdom.trading.TradingFeature
 import dev.gisketch.chowkingdom.town.TownReturnFeature
 import dev.gisketch.chowkingdom.wallets.WalletsFeature
+import dev.gisketch.chowkingdom.worldborder.WorldBorderFeature
 import dev.gisketch.chowkingdom.worlds.WorldsFeature
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
@@ -104,6 +105,7 @@ class ChowKingdomMod(modBus: IEventBus, container: ModContainer) {
         ExtractCommands.register()
         WalletsFeature.register(modBus)
         ShippingBinFeature.register(modBus)
+        WorldBorderFeature.register()
         ShopsFeature.register(modBus)
         ProfilesFeature.register(modBus)
         RolesFeature.register(modBus)

@@ -22,6 +22,7 @@ import dev.gisketch.chowkingdom.snackbar.SnackbarSounds
 import dev.gisketch.chowkingdom.snackbar.SnackbarType
 import dev.gisketch.chowkingdom.tech.TechLicenseFeature
 import dev.gisketch.chowkingdom.wallets.ChowcoinNetwork
+import dev.gisketch.chowkingdom.worldborder.WorldBorderFeature
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.core.registries.Registries
@@ -115,6 +116,7 @@ object ShippingBinFeature {
         if (sales.isNotEmpty()) ScalingFeature.invalidateShippingCache()
         BossEventsFeature.checkShippingUnlocks(event.server)
         TechLicenseFeature.checkShippingUnlocks(event.server)
+        WorldBorderFeature.checkShippingUnlocks(event.server)
     }
 
     private fun onPlayerLoggedIn(event: PlayerEvent.PlayerLoggedInEvent) {
@@ -151,6 +153,7 @@ object ShippingBinFeature {
             ScalingFeature.invalidateShippingCache()
             BossEventsFeature.checkShippingUnlocks(player.server)
             TechLicenseFeature.checkShippingUnlocks(player.server)
+            WorldBorderFeature.checkShippingUnlocks(player.server)
         }
         return payout.amount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
@@ -166,6 +169,7 @@ object ShippingBinFeature {
         ScalingFeature.invalidateShippingCache()
         BossEventsFeature.checkShippingUnlocks(context.source.server)
         TechLicenseFeature.checkShippingUnlocks(context.source.server)
+        WorldBorderFeature.checkShippingUnlocks(context.source.server)
         context.source.sendSuccess(
             {
                 val playerText = player?.gameProfile?.name?.let { " Recorded $amount shipping value for $it battlepass testing." }.orEmpty()

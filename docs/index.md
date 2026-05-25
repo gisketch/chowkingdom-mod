@@ -32,6 +32,7 @@
 - [RecipeDisabler](RECIPE_DISABLER.md)
 - [Spawning And Worlds](SPAWNING.md)
 - [Town Return](TOWN_RETURN.md)
+- [World Border](WORLD_BORDER.md)
 - [NPCs](NPCS.md)
 - [NPC Playerlike Animations](NPC_PLAYERLIKE_ANIMATIONS.md)
 - [NPC Boss Moveset Brainstorm](NPC_BOSS_MOVESET_BRAINSTORM.md)
